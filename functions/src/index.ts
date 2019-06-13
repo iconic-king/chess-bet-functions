@@ -29,6 +29,6 @@ return info.messageId;
 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     const strUser= JSON.stringify(user.email);
-    usercreation.inituser(user);
+    usercreation.createUser(user);
     sendMail(strUser,"Hello","Welcome to chess bet").catch(console.error);
 });
