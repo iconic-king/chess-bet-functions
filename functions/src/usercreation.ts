@@ -21,6 +21,7 @@ const createUserAccount =  (uid:string) => {
   status : "PENDING",
   amount : 0,
   currency : "" ,
+  elo_rating : 100 ,
   owner : uid
   }).then(()=>{
     console.log("User Account Created Successfully");
