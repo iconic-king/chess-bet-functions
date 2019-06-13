@@ -13,6 +13,7 @@ const createUserAccount =  (uid:string) => {
   terms_condition_accepted: false,
   events:{
     "CREATED" : {
+      name : "CREATED",
       date_created: date,
       done: true
     }
