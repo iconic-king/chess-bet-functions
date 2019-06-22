@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "chessbet-app-com-v1",
+  "private_key_id": "9a202d2cf679ce58bf3a786d28c7d715637f7a64",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDD4QU5s9r7XpAw\nd/xJhqAKKGspL7W0gQE7v/Ku3PIvFXUvIRB8+BqKJ6uOqgpk9GLKwh+JtYrshhpm\nfxTzNXUz1giJg2CvTTTXlwIvy04WnGimqAGIBFJgwMHtFKhDYFVnLOp/Mz4JhTMr\njDSCnbKH0tLPeOWAEAt6GhgWflhoy/W0IpFniqI4TrOPx5ZP7JA534CUcwS6j7pH\n/SoBOezDj6RNsGcTBbV8XwJE94l8TdTxIfYpJ6bUFTHtSvQw2AiF3xhenOiu4W6O\n2UTMYAti0WGUYWvJHvtsG1rFo/1tSaE6k1E6Ha5+eYImAkyrBvZlTtAv7EvmxrlT\nvtKVZ/hjAgMBAAECggEAJ/urJuOlG/FqClK7n0CJM3mboi0YcI9ysoEUZwg3sU+2\ne1fK909nj3LYjIb+FyxhbBTi/ieeA3i+M9TV8G0ljt6uIG++URo34pfy/NGJj4j+\nvaIGqf6D2DcQfrXcQOCNnkFnXm6Vx7i2QLneUBkjg6EPogUCB7l+tj5UU2cX4dAA\nX7Iemwsdp2BTE4PlT8zg0Nrkz9U7aEs2ssHOHPTsOD8VSHvSYA4SHS8iEjMCBwd0\n8WK/SmY0q5RcPfXTt0JlPnW+Pz+JrOjtnsv5EinnAGW7xTKrigUL1zAsFTTR6kPo\nu2X03WkT/ZJQnm8xXIRhWc8QVvgM5XJD9Awr3eap8QKBgQD4SbJB0QXQmypJxVgk\n8S/unvQy3owvh3NsWT42qoaDuMrxcrlANfqebkxGA/ZFWZByT0X66+kJCvgM02RE\nR/s2MR4xy5EGU+bu6PLXcegHSeQcAuWxn7LQJDHL3hv6mQOHmuz1u81sVBEvwECf\nR6Abn6+ibLCG3rilR6Z45Urn8wKBgQDJ9pX3Sdzmnc2IsJxqzW3OK3uPy2Qp1yNA\nTF8nuFqwivL63+t4u3M1iOMgz3m6DgZTM5wSQf2USdN7YcvJipzWme6/f2M+iZVw\nBzyXn6EIPBX7T1ue+YC5diCDbL47eNBS6aqoeRSrQGFLirQQxS9rGL5IUGWTfxTk\nkqlP0la50QKBgC7CAjXu3T952S7nYUAjw7kWajqiOphA0/XVoKe+2XI4/M8Xodd7\n0uS/NNICsQBCa7d7QlyMzOgNDsWrkbhiLeb4vQz3nyon5tebOxBjvSSSP8keqo8W\n2h/kkRQpke9RnZ6OCI4Gfhsmgc4SUJkubfKF0heujFf53aASrEEcPU0NAoGBAJxl\nBVCPtC4puQXGrfnOxt9GsNJzUEdOQBAElBMwIZpgnzRCvheqINct/6RixgKb5a38\nYzmIPJPeb5Q18RdK7ZUJcuZ8ASBmboBoOjW3+X1k+ii4FV0QHOyBW0Aqr01iiwAJ\nzovT53uNyUo0SKhL6iJm8MMS7vW/DTDLma0kVuBhAoGAZ+mGx5jRSKkqYKaeaOhS\nlFQRXPO/LvGmYnWZXTvBF4ngKGT3Fr4VrP06/9YG8t9UDbJa9ntCQIl98BjZxaTO\na9e94NBf0N4NOHNb7MdP76B4uZNC64pMPxspUfceUsJZasv9YSLnkKN+LyyTvGTV\nF90SUOviupOB3pPJMVLoKaU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-y3gr7@chessbet-app-com-v1.iam.gserviceaccount.com",
+  "client_id": "113062956604930998451",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-y3gr7%40chessbet-app-com-v1.iam.gserviceaccount.com"
+}

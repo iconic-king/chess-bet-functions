@@ -3,7 +3,6 @@
  */
 import * as admin from 'firebase-admin';
 
-admin.initializeApp();
 const firestoreDatabase = admin.firestore();
 
 export const createUserAccount =  (uid:string) => {
