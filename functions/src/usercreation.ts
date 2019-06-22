@@ -31,7 +31,7 @@ const createUserAccount =  (uid:string) => {
 }
 
 // Initialize user and user account in firestore
-export const createUser = (user:admin.auth.UserRecord)=>{
+export const createUser = (user:admin.auth.UserRecord) => {
  const date = new Date().toLocaleString();
  firestoreDatabase.collection("users").doc(user.uid).set({
    email: user.email,
