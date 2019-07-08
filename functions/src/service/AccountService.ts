@@ -7,7 +7,7 @@ export interface AccountService{
     date_created: string;
     events: Array<Event>;
     last_date_modified: string;
-    status: Status;
+    status: AccountStatus;
     owner: string;
     elo_rating:number;
 }
@@ -19,6 +19,25 @@ interface MatchableAccountService{
     elo_rating: number;
     match_type: MatchType;
 }
+
+export interface MatchService{
+    match_type : MatchType,
+    status: string,
+    players : {
+      BLACK : {
+         owner :string
+         from : number;
+         to: number;
+      }
+      WHITE :{
+        owner :string
+        from : number;
+        to: number;
+      }
+    },
+    events : Array<string> 
+}
+
 export class MatchableAccount implements MatchableAccountService{
     owner: string;
     matchable: boolean;
@@ -47,8 +66,15 @@ interface Event {
     done :boolean;
 }
 
-enum Status{
+enum AccountStatus{
     PENDING,
     ACTIVE,
     SUSPENDED
 }
+
+export enum MatchStatus{
+    IN_PROGRESS,
+    FINISHED,
+    INTERUPPTED
+}
+

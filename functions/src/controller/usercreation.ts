@@ -1,8 +1,7 @@
+import * as admin from 'firebase-admin';
 /**
  * @author Collins Magondu
  */
-import * as admin from 'firebase-admin';
-
 const firestoreDatabase = admin.firestore();
 
 export const createUserAccount =  (uid:string) => {

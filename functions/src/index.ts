@@ -36,7 +36,7 @@ export const createUserMatchableAccount =  functions.https.onRequest((req,res) =
         .then(snapshot => {
             if(snapshot.size !== 0){
                 try{
-                    const account = <AccountService>snapshot.docs[0].data();
+                    const account = <AccountService> snapshot.docs[0].data();
                     matchcreation.setMatchableAccount(account, req.query.match_type)
                     .then(() => {
                         res.status(200).send("Done :-)") // Ready to match
@@ -78,6 +78,7 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
                     // tslint:disable-next-line: no-shadowed-variable
                     .then((snapshot)=>{
                         if(snapshot !== null) {
+                         let matched:boolean = false;
                          snapshot.forEach(element => {
                             // tslint:disable-next-line: no-shadowed-variable
                             let account = <MatchableAccount> element.val();
@@ -86,10 +87,17 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
                                      (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
                                          console.log(account);
                                          account = <MatchablePlayOnlineAcount> element.val()
-                                         res.status(200).send(account);
+                                         const response = matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type)
+                                         if(response!== null){
+                                            matched = true;
+                                            res.status(200).send(account);
+                                         }
                                  }
                             }
                          });
+                         if(!matched){
+                            res.status(404).send("No Matchable Account");
+                         }
                     }
                    })
                    .catch((error)=>{
@@ -102,7 +110,7 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
         })
         .catch((error)=> {
           console.log(error.message);
-             
+          res.status(403).send("Forbidden");
         });
     }
 })
