@@ -1,9 +1,9 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
+    ".read": "auth != null",
+    ".write": "auth != null",
     "matchables" :{
-      ".indexOn" : "elo_rating"
+      ".indexOn" : ["elo_rating","match_type"]
     }
   }
 }

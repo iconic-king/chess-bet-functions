@@ -5,10 +5,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-const serviceAccount = require('../../chess-bet-creds.json');
+const serviceAccount = require('../chess-bet-creds.json');
 
 admin.initializeApp({
-    credential : admin.credential.cert(serviceAccount)
+    credential : admin.credential.cert(serviceAccount),
+    databaseURL : "https://chessbet-app-com-v1.firebaseio.com"
 });
 
 import * as usercreation from './controller/usercreation';
