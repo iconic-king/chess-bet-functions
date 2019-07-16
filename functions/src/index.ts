@@ -40,6 +40,7 @@ export const createUserMatchableAccount =  functions.https.onRequest((req,res) =
                     const account = <AccountService> snapshot.docs[0].data();
                     matchcreation.setMatchableAccount(account, req.query.match_type)
                     .then(() => {
+                        // TODO Send notification in object form
                         res.status(200).send("Done :-)") // Ready to match
                     }).catch((error) =>{
                         console.log(error.message);
@@ -75,23 +76,22 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
             if(snapshot.size !== 0){
                 try{
                     const matcher = <AccountService>snapshot.docs[0].data();
+                    let matched:boolean = false;
                     matchcreation.getMatchableAccountOnEloRating(matcher)
                     // tslint:disable-next-line: no-shadowed-variable
                     .then((snapshot)=>{
-                        if(snapshot !== null) {
-                         let matched:boolean = false;
+                        if(snapshot !== null) {      
                          snapshot.forEach(element => {
                             // tslint:disable-next-line: no-shadowed-variable
                             let account = <MatchableAccount> element.val();
-                            if(account.match_type === req.query.match_type){
+                            if(account.match_type === req.query.match_type && !matched){
                                  if((account.match_type.toString() === "PLAY_ONLINE") && 
                                      (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                         console.log(account);
                                          account = <MatchablePlayOnlineAcount> element.val()
                                          const response = matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type)
                                          if(response!== null){
                                             matched = true;
-                                            res.status(200).send(account);
+                                            res.json(account); // Return Jsonified response
                                          }
                                  }
                             }
