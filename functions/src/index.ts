@@ -14,7 +14,7 @@ admin.initializeApp({
 
 import * as usercreation from './controller/usercreation';
 import * as matchcreation from './controller/matchcreation';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAcount } from './service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount} from './service/AccountService';
 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     usercreation.createUser(user).then(()=>{
@@ -87,12 +87,16 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
                             if(account.match_type === req.query.match_type && !matched){
                                  if((account.match_type.toString() === "PLAY_ONLINE") && 
                                      (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                         account = <MatchablePlayOnlineAcount> element.val()
-                                         const response = matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type)
-                                         if(response!== null){
-                                            matched = true;
-                                            res.json(account); // Return Jsonified response
-                                         }
+                                         account = <MatchablePlayOnlineAccount> element.val()
+                                         matched = true;
+                                         matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
+                                               // tslint:disable-next-line: no-shadowed-variable
+                                               matchcreation.getMatchableAccount(uid).then((snapshot) =>{
+                                                    res.json(snapshot.val());
+                                               }).catch((err)=>{
+                                                   console.error(err);                                    
+                                               })
+                                         });
                                  }
                             }
                          });

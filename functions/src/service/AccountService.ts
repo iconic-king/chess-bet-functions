@@ -56,9 +56,22 @@ export class MatchableAccount implements MatchableAccountService{
     }
 }
 
-export class MatchablePlayOnlineAcount extends MatchableAccount{ 
+export class MatchablePlayOnlineAccount extends MatchableAccount{ 
 }
 
+
+export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
+    opponent : string;
+    matchId: string;
+    constructor (owner: string,matchable :boolean, matched :boolean,
+        elo_rating: number,match_type: MatchType,online:boolean,
+        opponent: string, matchId: string){
+            super(owner, matchable, matched, elo_rating, match_type, online);
+            this.matchId = matchId;
+            this.opponent = opponent;
+        }
+
+}
 
 interface Event {
     name:string;

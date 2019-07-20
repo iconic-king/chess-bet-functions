@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAcount, MatchService} from '../service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 
 const firestoreDatabase = admin.firestore();
@@ -15,7 +15,7 @@ export const getUserAccount = (uid:string)=>{
 export const setMatchableAccount =  (account:AccountService,matchType:MatchType) =>{
     let matchable:MatchableAccount;
     if(matchType === MatchType.PLAY_ONLINE){ // Describes Play Online Account
-        matchable = new MatchablePlayOnlineAcount(account.owner,
+        matchable = new MatchablePlayOnlineAccount(account.owner,
             true,
             false,
             account.elo_rating,
@@ -34,9 +34,13 @@ export const setMatchableAccount =  (account:AccountService,matchType:MatchType)
     return matchableReference.child(account.owner).set(matchable);
 }
 
+export const getMatchableAccount = (uid: string) => {
+  return matchableReference.child(uid).once('value');
+}
+
 
 export const getMatchableAccountOnEloRating = (matcher : AccountService) => {
-    return matchableReference.orderByChild("elo_rating").equalTo(matcher.elo_rating)
+    return matchableReference.orderByChild("elo_rating").limitToFirst(2).equalTo(matcher.elo_rating)
    .once('value');
 }
 
@@ -49,7 +53,7 @@ export const getMatchableAccountOnEloRating = (matcher : AccountService) => {
    })
 }
 
-export const setUpMatch = (black:string, white:string , match_type:MatchType) => {
+export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
     const match:MatchService= {
         match_type : match_type,
         status: "IN_PROGRESS",
@@ -72,6 +76,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType) =>
            return updateMatchedAccount(white,"BLACK",matchId).then(()=>{
                updateMatchedAccount(black,"WHITE",matchId).then(()=>{
                 console.log("Match Done ;-)");
+                callback(white);
                })
                .catch((error)=>{
                 console.log(error.message);
