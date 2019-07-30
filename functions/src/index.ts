@@ -14,7 +14,8 @@ admin.initializeApp({
 
 import * as usercreation from './controller/usercreation';
 import * as matchcreation from './controller/matchcreation';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount} from './service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchedPlayOnlineAccount} from './service/AccountService';
+import { timeDifferenceCalculator } from './utils/TimeUtil'
 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     usercreation.createUser(user).then(()=>{
@@ -40,7 +41,6 @@ export const createUserMatchableAccount =  functions.https.onRequest((req,res) =
                     const account = <AccountService> snapshot.docs[0].data();
                     matchcreation.setMatchableAccount(account, req.query.match_type)
                     .then(() => {
-                        // TODO Send notification in object form
                         res.status(200).send("Done :-)") // Ready to match
                     }).catch((error) =>{
                         console.log(error.message);
@@ -84,20 +84,22 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
                          snapshot.forEach(element => {
                             // tslint:disable-next-line: no-shadowed-variable
                             let account = <MatchableAccount> element.val();
-                            if(account.match_type === req.query.match_type && !matched){
-                                 if((account.match_type.toString() === "PLAY_ONLINE") && 
-                                     (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                         account = <MatchablePlayOnlineAccount> element.val()
-                                         matched = true;
-                                         matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
-                                               // tslint:disable-next-line: no-shadowed-variable
-                                               matchcreation.getMatchableAccount(uid).then((snapshot) =>{
-                                                    res.json(snapshot.val());
-                                               }).catch((err)=>{
-                                                   console.error(err);                                    
-                                               })
-                                         });
-                                 }
+                            if(timeDifferenceCalculator(account.date_created) <= 30) {
+                                if(account.match_type === req.query.match_type && !matched){
+                                    if((account.match_type.toString() === "PLAY_ONLINE") && 
+                                        (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
+                                            account = <MatchablePlayOnlineAccount> element.val();
+                                            matched = true;
+                                            matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
+                                                  // tslint:disable-next-line: no-shadowed-variable
+                                                  matchcreation.getMatchableAccount(uid).then((snapshot) =>{
+                                                       res.json(<MatchedPlayOnlineAccount> snapshot.val());
+                                                  }).catch((err)=>{
+                                                      console.error(err);                                    
+                                                  })
+                                            });
+                                    }
+                               }
                             }
                          });
                          if(!matched){
@@ -118,4 +120,4 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
           res.status(403).send("Forbidden");
         });
     }
-})
+});

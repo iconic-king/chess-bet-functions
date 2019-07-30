@@ -40,8 +40,11 @@ export const getMatchableAccount = (uid: string) => {
 
 
 export const getMatchableAccountOnEloRating = (matcher : AccountService) => {
-    return matchableReference.orderByChild("elo_rating").limitToFirst(2).equalTo(matcher.elo_rating)
-   .once('value');
+    return matchableReference
+    .orderByChild("elo_rating")
+    .limitToFirst(30)
+    .equalTo(matcher.elo_rating)
+    .once('value');
 }
 
  const updateMatchedAccount = (uid:string,opponent:string,matchId:string) => {

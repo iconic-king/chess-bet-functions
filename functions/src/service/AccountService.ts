@@ -18,6 +18,7 @@ interface MatchableAccountService{
     matched :boolean;
     elo_rating: number;
     match_type: MatchType;
+    date_created: string;
 }
 
 export interface MatchService{
@@ -39,6 +40,7 @@ export interface MatchService{
 }
 
 export class MatchableAccount implements MatchableAccountService{
+    date_created: string;
     owner: string;
     matchable: boolean;
     matched: boolean;
@@ -53,6 +55,7 @@ export class MatchableAccount implements MatchableAccountService{
            this.matched = matched;
            this.match_type = match_type;
            this.online = online; 
+           this.date_created = new Date().toLocaleString();
     }
 }
 
@@ -70,7 +73,6 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
             this.matchId = matchId;
             this.opponent = opponent;
         }
-
 }
 
 interface Event {
