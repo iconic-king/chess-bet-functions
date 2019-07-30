@@ -71,6 +71,7 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
     res.set('Access-Control-Allow-Methods', 'POST');
 
     if(req.method === 'POST'){
+        const timeOfMatch : Date = new Date();
         matchcreation.getUserAccount(req.query.uid)
         .then((snapshot) => {
             if(snapshot.size !== 0){
@@ -84,8 +85,8 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
                          snapshot.forEach(element => {
                             // tslint:disable-next-line: no-shadowed-variable
                             let account = <MatchableAccount> element.val();
-                            if(timeDifferenceCalculator(account.date_created) <= 30) {
                                 if(account.match_type === req.query.match_type && !matched){
+                                    if(timeDifferenceCalculator(timeOfMatch, account.date_created) <= 40) {
                                     if((account.match_type.toString() === "PLAY_ONLINE") && 
                                         (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
                                             account = <MatchablePlayOnlineAccount> element.val();
