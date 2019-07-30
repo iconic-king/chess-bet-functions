@@ -20,7 +20,7 @@ export const createUserAccount =  (uid:string) => {
   status : "PENDING",
   amount : 0,
   currency : "" ,
-  elo_rating : 100 ,
+  elo_rating : 1000 ,
   owner : uid
   });
 }
