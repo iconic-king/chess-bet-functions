@@ -14,7 +14,7 @@ admin.initializeApp({
 
 import * as usercreation from './controller/usercreation';
 import * as matchcreation from './controller/matchcreation';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchedPlayOnlineAccount} from './service/AccountService';
+import { AccountService, MatchableAccount, MatchRange , MatchablePlayOnlineAccount, MatchedPlayOnlineAccount} from './service/AccountService';
 import { timeDifferenceCalculator } from './utils/TimeUtil'
 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
@@ -77,8 +77,21 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
             if(snapshot.size !== 0){
                 try{
                     const matcher = <AccountService>snapshot.docs[0].data();
+                    let getMatchableAccountPomise;
                     let matched:boolean = false;
-                    matchcreation.getMatchableAccountOnEloRating(matcher)
+                    if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                            
+                        const range : MatchRange = {
+                            start_at: parseInt(req.query.start_at),
+                            end_at : parseInt(req.query.end_at)
+                        }
+                        // Ranged elo rating
+                        getMatchableAccountPomise  = matchcreation.getMatchableAccountOnRangedEloRating(matcher,range);
+                    }
+                    else {
+                        // Exact elo rating
+                        getMatchableAccountPomise =  matchcreation.getMatchableAccountOnExactEloRating(matcher);
+                    }
+                    getMatchableAccountPomise
                     // tslint:disable-next-line: no-shadowed-variable
                     .then((snapshot)=>{
                         if(snapshot !== null) {      

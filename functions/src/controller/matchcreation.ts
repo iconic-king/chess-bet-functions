@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService} from '../service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchRange} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 
 const firestoreDatabase = admin.firestore();
@@ -39,12 +39,21 @@ export const getMatchableAccount = (uid: string) => {
 }
 
 
-export const getMatchableAccountOnEloRating = (matcher : AccountService) => {
-    return matchableReference
-    .orderByChild("elo_rating")
+export const getMatchableAccountOnExactEloRating = (matcher : AccountService) => {
+    return matchableReference.orderByChild("elo_rating")
     .limitToFirst(30)
     .equalTo(matcher.elo_rating)
     .once('value');
+}
+
+export const getMatchableAccountOnRangedEloRating = (matcher : AccountService, range: MatchRange) => {
+  const startAt : number = matcher.elo_rating - range.start_at;
+  const endAt : number = matcher.elo_rating + range.end_at;
+  return matchableReference.orderByChild("elo_rating")
+  .limitToFirst(30)
+  .startAt(startAt)
+  .endAt(endAt)
+  .once('value');
 }
 
  const updateMatchedAccount = (uid:string,opponent:string,matchId:string) => {

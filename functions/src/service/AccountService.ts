@@ -93,3 +93,8 @@ export enum MatchStatus{
     INTERUPPTED
 }
 
+export interface MatchRange {
+    start_at: number;
+    end_at: number;
+}
+
