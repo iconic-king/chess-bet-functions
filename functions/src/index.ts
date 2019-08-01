@@ -12,126 +12,36 @@ admin.initializeApp({
     databaseURL : "https://chessbet-app-com-v1.firebaseio.com"
 });
 
-import * as usercreation from './controller/usercreation';
-import * as matchcreation from './controller/matchcreation';
-import { AccountService, MatchableAccount, MatchRange , MatchablePlayOnlineAccount, MatchedPlayOnlineAccount} from './service/AccountService';
-import { timeDifferenceCalculator } from './utils/TimeUtil'
-
+import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation} from './controller/MatchController'
+import { createUserAccountImplementation } from './controller/UserAccountController'
+ 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
-    usercreation.createUser(user).then(()=>{
-        usercreation.createUserAccount(user.uid).then(() => {
-           console.log("User Created Succesfully");
-        }).catch((error)=>{
-         console.log(error.message);
-        });
-    }).catch((error)=>{
-       console.log(error.message);
-    });
+    createUserAccountImplementation(user);
 });
-
+/**
+ * This function is used to create a matchable account
+ */
 export const createUserMatchableAccount =  functions.https.onRequest((req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     
     if(req.method === 'POST'){
-        matchcreation.getUserAccount(req.query.uid)
-        .then(snapshot => {
-            if(snapshot.size !== 0){
-                try{
-                    const account = <AccountService> snapshot.docs[0].data();
-                    matchcreation.setMatchableAccount(account, req.query.match_type)
-                    .then(() => {
-                        res.status(200).send("Done :-)") // Ready to match
-                    }).catch((error) =>{
-                        console.log(error.message);
-                        
-                    })
-                }catch(exception){
-                    console.log(exception.message);
-                    res.status(403).send("Forbidden");
-                }
-            }
-            else{
-                res.status(404).send("User unique id does not exists");
-            }
-        })
-        .catch(error => {
-            console.log(error.message);
-            res.status(403).send("Forbidden");
-        }) 
+      createMatchabableAccountImplementation(res, req);
     }
     else{
         res.status(403).send("Forbidden");
     }
 });
 
-
+/**
+ *  This function is used to get an matchable that can trigger a match
+ *  Based on time of creation of the matchable, match type or elo rating range of the specific user requesting the match
+ */
 export const getMatchableAccountOnEloRating = functions.https.onRequest((req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
 
     if(req.method === 'POST'){
-        const timeOfMatch : Date = new Date();
-        matchcreation.getUserAccount(req.query.uid)
-        .then((snapshot) => {
-            if(snapshot.size !== 0){
-                try{
-                    const matcher = <AccountService>snapshot.docs[0].data();
-                    let getMatchableAccountPomise;
-                    let matched:boolean = false;
-                    if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                            
-                        const range : MatchRange = {
-                            start_at: parseInt(req.query.start_at),
-                            end_at : parseInt(req.query.end_at)
-                        }
-                        // Ranged elo rating
-                        getMatchableAccountPomise  = matchcreation.getMatchableAccountOnRangedEloRating(matcher,range);
-                    }
-                    else {
-                        // Exact elo rating
-                        getMatchableAccountPomise =  matchcreation.getMatchableAccountOnExactEloRating(matcher);
-                    }
-                    getMatchableAccountPomise
-                    // tslint:disable-next-line: no-shadowed-variable
-                    .then((snapshot)=>{
-                        if(snapshot !== null) {      
-                         snapshot.forEach(element => {
-                            // tslint:disable-next-line: no-shadowed-variable
-                            let account = <MatchableAccount> element.val();
-                                if(account.match_type === req.query.match_type && !matched){
-                                    if(timeDifferenceCalculator(timeOfMatch, account.date_created) <= 40) {
-                                    if((account.match_type.toString() === "PLAY_ONLINE") && 
-                                        (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                            account = <MatchablePlayOnlineAccount> element.val();
-                                            matched = true;
-                                            matchcreation.setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
-                                                  // tslint:disable-next-line: no-shadowed-variable
-                                                  matchcreation.getMatchableAccount(uid).then((snapshot) =>{
-                                                       res.json(<MatchedPlayOnlineAccount> snapshot.val());
-                                                  }).catch((err)=>{
-                                                      console.error(err);                                    
-                                                  })
-                                            });
-                                    }
-                               }
-                            }
-                         });
-                         if(!matched){
-                            res.status(404).send("No Matchable Account");
-                         }
-                    }
-                   })
-                   .catch((error)=>{
-                    console.log(error.message);
-                   })
-                }catch(exception){
-                    res.status(403).send("Forbidden");
-                }
-            }
-        })
-        .catch((error)=> {
-          console.log(error.message);
-          res.status(403).send("Forbidden");
-        });
+        createMatchOnEloRatingImplementation(res,req);
     }
 });
