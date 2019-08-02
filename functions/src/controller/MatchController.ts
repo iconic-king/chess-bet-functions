@@ -69,16 +69,16 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                                     if(timeDifferenceCalculator(timeOfMatch, account.date_created) <= 40) {
                                     if((account.match_type.toString() === "PLAY_ONLINE") && 
                                         (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                            account = <MatchablePlayOnlineAccount> element.val();
-                                            matched = true;
-                                            setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
-                                                  // tslint:disable-next-line: no-shadowed-variable
-                                                 getMatchableAccount(uid).then((snapshot) =>{
-                                                       res.json(<MatchedPlayOnlineAccount> snapshot.val());
-                                                  }).catch((err)=>{
-                                                      console.error(err);                                    
-                                                  })
-                                            });
+                                        account = <MatchablePlayOnlineAccount> element.val();
+                                        matched = true;
+                                        setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
+                                                // tslint:disable-next-line: no-shadowed-variable
+                                                getMatchableAccount(uid).then((snapshot) =>{
+                                                    res.json(<MatchedPlayOnlineAccount> snapshot.val());
+                                                }).catch((err)=>{
+                                                    console.error(err);                                    
+                                                })
+                                        });
                                     }
                                }
                             }
