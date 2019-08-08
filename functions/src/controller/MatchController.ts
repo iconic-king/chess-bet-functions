@@ -46,7 +46,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                     const matcher = <AccountService>snapshot.docs[0].data();
                     let getMatchableAccountPomise;
                     let matched:boolean = false;
-                    if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                            
+                    if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                          
                         const range : MatchRange = {
                             start_at: parseInt(req.query.start_at),
                             end_at : parseInt(req.query.end_at)

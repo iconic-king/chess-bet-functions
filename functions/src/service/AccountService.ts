@@ -23,20 +23,20 @@ interface MatchableAccountService{
 
 export interface MatchService{
     match_type : MatchType,
-    status: string,
     players : {
       BLACK : {
          owner :string
          from : number;
          to: number;
+         events : Array<MatchStatus> ;
       }
       WHITE :{
         owner :string
         from : number;
         to: number;
+        events : Array<MatchStatus>;
       }
-    },
-    events : Array<string> 
+    }
 }
 
 export class MatchableAccount implements MatchableAccountService{
@@ -90,7 +90,8 @@ enum AccountStatus{
 export enum MatchStatus{
     IN_PROGRESS,
     FINISHED,
-    INTERUPPTED
+    INTERUPPTED,
+    TIMELAPSED
 }
 
 export interface MatchRange {

@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchRange} from '../service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchRange, MatchStatus} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 
 const firestoreDatabase = admin.firestore();
@@ -66,23 +66,23 @@ export const getMatchableAccountOnRangedEloRating = (matcher : AccountService, r
 }
 
 export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
-    const match:MatchService= {
+    const match:MatchService = {
         match_type : match_type,
-        status: "IN_PROGRESS",
         players : {
           BLACK : {
              owner :black,
              from : 0,
-             to: 0
+             to: 0,
+             events : [MatchStatus.IN_PROGRESS]
           },
           WHITE :{
             owner :white ,
             from : 0, 
-            to: 0
+            to: 0,
+            events : [MatchStatus.IN_PROGRESS]
           }
         },
-        events : ["STARTED"]
-    }
+      }
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
            return updateMatchedAccount(white,"BLACK",matchId).then(()=>{
@@ -97,7 +97,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
            .catch((error)=>{
             console.log(error);
             
-           })
+           });
     }
     return null;
 }
