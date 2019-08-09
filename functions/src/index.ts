@@ -13,7 +13,7 @@ admin.initializeApp({
 });
 
 import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation} from './controller/MatchController'
-import { createUserAccountImplementation } from './controller/UserAccountController'
+import { createUserAccountImplementation } from './controller/AccountController'
  
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
