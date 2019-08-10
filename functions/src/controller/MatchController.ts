@@ -44,7 +44,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
             if(snapshot.size !== 0){
                 try{
                     const matcher = <AccountService>snapshot.docs[0].data();
-                    let getMatchableAccountPomise;
+                    let getMatchableAccountPromise;
                     let matched:boolean = false;
                     if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                          
                         const range : MatchRange = {
@@ -52,13 +52,13 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                             end_at : parseInt(req.query.end_at)
                         }
                         // Ranged elo rating
-                        getMatchableAccountPomise  = getMatchableAccountOnRangedEloRating(matcher,range);
+                        getMatchableAccountPromise  = getMatchableAccountOnRangedEloRating(matcher,range);
                     }
                     else {
                         // Exact elo rating
-                        getMatchableAccountPomise =  getMatchableAccountOnExactEloRating(matcher);
+                        getMatchableAccountPromise =  getMatchableAccountOnExactEloRating(matcher);
                     }
-                    getMatchableAccountPomise
+                    getMatchableAccountPromise
                     // tslint:disable-next-line: no-shadowed-variable
                     .then((snapshot)=>{
                         if(snapshot !== null) {      
