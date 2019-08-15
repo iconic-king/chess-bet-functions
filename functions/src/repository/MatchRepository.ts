@@ -1,16 +1,12 @@
 import * as admin from 'firebase-admin';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchRange, MatchStatus} from '../service/AccountService';
+import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchRange} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 
-const firestoreDatabase = admin.firestore();
 const realtimeDatabase = admin.database();
 
 const matchableReference = realtimeDatabase.ref('matchables');
 const matchesReference = realtimeDatabase.ref('matches');
 
-export const getUserAccount = (uid:string)=>{
-    return firestoreDatabase.collection('accounts').where('owner',"==",uid).get();
-}
 
 export const setMatchableAccount =  (account:AccountService,matchType:MatchType) =>{
     let matchable:MatchableAccount;
@@ -100,4 +96,8 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
            });
     }
     return null;
+}
+
+export const getMatch = (match_id:string) => {
+   return matchesReference.child(match_id).once('value');
 }

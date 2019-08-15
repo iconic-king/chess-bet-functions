@@ -12,9 +12,12 @@ admin.initializeApp({
     databaseURL : "https://chessbet-app-com-v1.firebaseio.com"
 });
 
-import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation} from './controller/MatchController'
+import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
- 
+
+// ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
+
+
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
 });
@@ -33,6 +36,11 @@ export const createUserMatchableAccount =  functions.https.onRequest((req,res) =
     }
 });
 
+// ----------------------------- ACCOUNT SERVICE END ----------------------------------------------
+
+
+// ----------------------------- MATCH SERVICE START ----------------------------------------------
+
 /**
  *  This function is used to get an matchable that can trigger a match
  *  Based on time of creation of the matchable, match type or elo rating range of the specific user requesting the match
@@ -45,3 +53,14 @@ export const getMatchableAccountOnEloRating = functions.https.onRequest((req, re
         createMatchOnEloRatingImplementation(res,req);
     }
 });
+
+export const evaluateMatch = functions.https.onRequest((req, res) =>{
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+
+    if(req.method === 'POST'){
+        evaluateAndStoreMatch(req,res);
+    }
+});
+
+// ----------------------------- MATCH SERVICE END ----------------------------------------------

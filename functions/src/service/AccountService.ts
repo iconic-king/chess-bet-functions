@@ -1,15 +1,27 @@
 import { MatchType } from "../domain/MatchType";
+import { MatchResult } from "./MatchService";
+
+export interface UserService{
+    email: string | undefined,
+    uid: string,
+    disabled: boolean,
+    date_created: string,
+    date_modified: string,
+    user_name: string;
+    profile_photo_url:string
+}
 
 export interface AccountService{
     amount: number;
     currency: string;
     terms_condition_accepted:boolean;
     date_created: string;
-    events: Array<Event>;
+    events: Array<AccountEvent>;
     last_date_modified: string;
     status: AccountStatus;
     owner: string;
     elo_rating:number;
+    matches: Array<MatchDetailsService>;
 }
 
 interface MatchableAccountService{
@@ -25,18 +37,37 @@ export interface MatchService{
     match_type : MatchType,
     players : {
       BLACK : {
-         owner :string
+         owner :string;
          from : number;
          to: number;
-         events : Array<MatchStatus> ;
+         events : Array<MatchEvent> ;
       }
       WHITE :{
         owner :string
         from : number;
         to: number;
-        events : Array<MatchStatus>;
+        events : Array<MatchEvent>;
       }
     }
+}
+/**
+ *  Will be used by the endpoint to get match details while also passing the result
+ */
+export interface MatchDetailsService {
+    match_type: MatchType;
+    match_result: MatchResult; 
+    players : {
+        BLACK : {
+           owner :string;
+           events : Array<MatchEvent> ;
+           elo_rating: number;
+        }
+        WHITE :{
+          owner :string
+          events : Array<MatchEvent>;
+          elo_rating: number;
+        }
+      }
 }
 
 export class MatchableAccount implements MatchableAccountService{
@@ -75,19 +106,19 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
         }
 }
 
-interface Event {
+export interface AccountEvent {
     name:string;
     date_created: string;
     done :boolean;
 }
 
-enum AccountStatus{
+export enum AccountStatus{
     PENDING,
     ACTIVE,
     SUSPENDED
 }
 
-export enum MatchStatus{
+export enum MatchEvent{
     IN_PROGRESS,
     FINISHED,
     INTERUPPTED,
