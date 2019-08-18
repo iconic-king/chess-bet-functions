@@ -11,7 +11,6 @@ import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { timeDifferenceCalculator } from '../utils/TimeUtil'   
 import { MatchResult } from '../service/MatchService';
 
-
 export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
     getUserAccount(req.query.uid).get()
     .then(snapshot => {
@@ -154,18 +153,20 @@ export const evaluateAndStoreMatch =  (req: Request, res: Response) => {
                 const match_details: MatchDetailsService = {
                     match_result : matchResult,
                     match_type : match.match_type,
-                    players : {
-                        BLACK : {
+                    players : [
+                        {
                             owner : match.players.BLACK.owner,
                             elo_rating : decidePlayerRating(account_one,account_two,match.players.BLACK.owner),
-                            events : match.players.BLACK.events
+                            events : match.players.BLACK.events,
+                            type : 'BLACK'
                         },
-                        WHITE : {
+                        {
                             owner : match.players.WHITE.owner,
                             elo_rating : decidePlayerRating(account_one,account_two,match.players.WHITE.owner),
-                            events : match.players.WHITE.events
+                            events : match.players.WHITE.events,
+                            type : 'WHITE'
                         }
-                    }
+                    ]
                 }
                 if(account_one.matches === undefined){
                     account_one.matches = new Array<MatchDetailsService>();

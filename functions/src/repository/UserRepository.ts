@@ -15,6 +15,7 @@ export const createUserAccount =  (uid:string) => {
     date_created: date,
     done: true
   }
+  
   const account: AccountService = {
     date_created: date,
     last_date_modified: date,

@@ -53,21 +53,19 @@ export interface MatchService{
 /**
  *  Will be used by the endpoint to get match details while also passing the result
  */
+
+ interface Player{
+    owner :string;
+    events : Array<MatchEvent> ;
+    elo_rating: number;
+    type: string;
+ }
+
+
 export interface MatchDetailsService {
     match_type: MatchType;
     match_result: MatchResult; 
-    players : {
-        BLACK : {
-           owner :string;
-           events : Array<MatchEvent> ;
-           elo_rating: number;
-        }
-        WHITE :{
-          owner :string
-          events : Array<MatchEvent>;
-          elo_rating: number;
-        }
-      }
+    players : Array<Player>;
 }
 
 export class MatchableAccount implements MatchableAccountService{
