@@ -5,7 +5,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
+const {Storage} = require('@google-cloud/storage');
 const serviceAccount = require('../chess-bet-creds.json');
+const path = require("path");
+const os = require("os");
+const spawn = require("child-process-promise").spawn;
 
 admin.initializeApp({
     credential : admin.credential.cert(serviceAccount),
@@ -14,7 +18,6 @@ admin.initializeApp({
 
 import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
-
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -64,3 +67,48 @@ export const evaluateMatch = functions.https.onRequest((req, res) =>{
 });
 
 // ----------------------------- MATCH SERVICE END ----------------------------------------------
+
+// ----------------------------- STORAGE FUNCTIONS START  ----------------------------------------------
+export const resizeProfilePhotos = functions.storage.object().onFinalize(event => {
+    const bucket = event.bucket;
+    const contentType = event.bucket;
+    const filePath = event.name;
+    const metadata = event.metadata;
+
+    console.log(path.basename(filePath));
+
+    if(metadata !== undefined && metadata.isResized){
+        console.log("Already resized");
+        return;
+    }
+    
+    if(path.basename(filePath).toString() !== "profile_photo"){
+        console.log("Function to resize profile photos");
+        return;
+    }
+
+    console.log("Execution started");
+    const newBucket = new Storage().bucket(bucket);
+
+    const tmpFilePath = path.join(os.tmpdir(),path.basename(filePath));
+    const newMetadata = { 
+        contentType : contentType,
+        isResized : true
+    };
+    return newBucket.file(filePath).download({
+       destination : tmpFilePath 
+    }).then(()=> {
+        return spawn("convert", [tmpFilePath, "-resize", "200x200", tmpFilePath])
+    }).then(()=> {
+        try {
+            newBucket.upload(tmpFilePath, {
+                destination : path.basename(filePath),
+                metadata : newMetadata
+            });
+            console.log("Resize Done");
+        } catch(error) {
+            console.log(error.message);
+        }
+    });
+});
+// ----------------------------- STORAGE FUNCTIONS START  --------------------------------------------

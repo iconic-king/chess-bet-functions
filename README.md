@@ -17,7 +17,7 @@ firebase auth:import users.json --hash-algo=scrypt --rounds=8 --mem-cost=14
 
 
 #### Updates
-. Update Firebase
+. Update Firebase Functions
 ```
 npm install --save firebase-functions@latest
 ```
