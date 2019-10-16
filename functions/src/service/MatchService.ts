@@ -3,4 +3,5 @@ export interface MatchResult {
     matchStatus:string | undefined;
     gain: string;
     loss: string;
+    pngText: string
 }

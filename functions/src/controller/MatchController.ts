@@ -41,6 +41,7 @@ export const createMatchabableAccountImplementation = (res : Response, req: Requ
 
 export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => { 
     const timeOfMatch : Date = new Date();
+    // TODO Use matchable account repository function
         getUserAccount(req.query.uid).get()
         .then((snapshot) => {
             if(snapshot.size !== 0){
@@ -116,12 +117,15 @@ function newRating (expected_score: number, score: number, rating: number){
 
 function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : AccountService {
     if(account.owner === matchResult.gain) {
+        // Won
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 1.0, account.elo_rating);
     }
     else if (matchResult.matchStatus === 'DRAW') {
+        // Draw
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 0.5 , account.elo_rating);
     }
     else{
+        // Lost
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 0 , account.elo_rating);
     }
     account.elo_rating = Math.round(account.elo_rating);
