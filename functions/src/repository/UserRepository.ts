@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService,AccountEvent, AccountStatus, UserService } from '../service/AccountService';
+import { AccountService,AccountEvent, UserService } from '../service/AccountService';
 /**
  * @author Collins Magondu
  */
@@ -23,14 +23,14 @@ export const createUserAccount =  (uid:string) => {
     events:[
       initialEvent
     ],
-    status : AccountStatus.PENDING,
+    status : 'PENDING', //AccountStatus.PENDING
     amount : 0,
     currency : "" ,
     elo_rating : MIN_ELO_RATING ,
     owner : uid,
     matches:[]
   }
-  return firestoreDatabase.collection("accounts").add({account});
+  return firestoreDatabase.collection("accounts").add(account);
 }
 
 // Initialize user and user account in firestore
@@ -46,7 +46,12 @@ export const createUser = (user:admin.auth.UserRecord) => {
   user_name : "anonymous",
   profile_photo_url : ''
  }
+
  return firestoreDatabase.collection("users").doc(user.uid).set(user_account);
+}
+
+export const getUserByEmail = (user: admin.auth.UserRecord) => {
+  return firestoreDatabase.collection("users").where('email', "==", user.email).get();
 }
 
 export const getUserAccount = (uid:string) => {

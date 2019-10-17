@@ -18,7 +18,7 @@ export interface AccountService{
     date_created: string;
     events: Array<AccountEvent>;
     last_date_modified: string;
-    status: AccountStatus;
+    status: string;
     owner: string;
     elo_rating:number;
     matches: Array<MatchDetailsService>;
