@@ -46,6 +46,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
         .then((snapshot) => {
             if(snapshot.size !== 0){
                 try{
+                    // Get the cloud firestore account reference
                     const matcher = <AccountService>snapshot.docs[0].data();
                     let getMatchableAccountPromise;
                     let matched:boolean = false;
