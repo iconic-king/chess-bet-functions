@@ -1,6 +1,7 @@
 export enum MatchType{
-    PLAY_ONLINE,
-    TWO_PLAYER,
-    BET_ONLINE,
-    SINGLE_PLAYER
+    PLAY_ONLINE = "PLAY_ONLINE",
+    TWO_PLAYER = "TWO_PLAYER",
+    BET_ONLINE = "BET_ONLINE",
+    SINGLE_PLAYER ="BET_ONLINE",
+    NO_TYPE = "NO_TYPE"
 }

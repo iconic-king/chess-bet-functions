@@ -21,6 +21,11 @@ export interface AccountService{
     status: string;
     owner: string;
     elo_rating:number;
+    last_matchable_time: number
+    last_match_type: MatchType
+    last_match_duration: number;
+    last_match_amount: Amount;
+    matched: boolean;
     matches: Array<MatchDetailsService>;
 }
 
@@ -31,6 +36,11 @@ interface MatchableAccountService{
     elo_rating: number;
     match_type: MatchType;
     date_created: string;
+}
+
+export interface Amount {
+    currency: string;
+    amount: number;
 }
 
 export interface MatchService{
