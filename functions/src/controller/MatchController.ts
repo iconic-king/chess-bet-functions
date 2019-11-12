@@ -66,7 +66,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                         
                         
                         for (const account of accounts) {
-                            if((account.elo_rating >= (matcher.elo_rating - range.start_at)) &&  (account.elo_rating <= (matcher.elo_rating + range.end_at))){
+                            if((account.elo_rating >= (matcher.elo_rating - range.start_at)) &&  (account.elo_rating <= (matcher.elo_rating + range.end_at) && (matcher.owner !== account.owner))){
                                 matchableAccount = account;
                                 break;
                             }     
