@@ -16,7 +16,7 @@ export const createUserAccountImplementation = (user : auth.UserRecord) => {
         }
         else {
             // TODO reconsider removng this block
-            throw new Error("User Account");
+            throw new Error("User Account Exists");
         }
     }).catch((err)=>{
         console.error(err);
