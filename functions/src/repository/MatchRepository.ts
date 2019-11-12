@@ -102,7 +102,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
            return updateMatchedAccount(white,"BLACK",matchId).then(()=>{
                updateMatchedAccount(black,"WHITE",matchId).then(()=>{
                 console.log("Match Done ;-)");
-                callback(white);
+                callback();
                })
                .catch((error)=>{
                 console.log(error.message);

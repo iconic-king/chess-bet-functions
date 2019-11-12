@@ -73,13 +73,15 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                         }
                         // A candidate has been found
                         if(matchableAccount !== null){
-                            setUpMatch(matchableAccount.owner,matcher.owner, matcher.last_match_type, (uid:string) =>  {
-                                getUserByUID(uid).then( user => {
-                                    const userAccount = <UserService> user.docs[0].data();
-                                    res.json((userAccount))
-                                }).catch(error => {
-                                    console.log(error);
-                                })
+                            setUpMatch(matchableAccount.owner,matcher.owner, matcher.last_match_type, () =>  {
+                                if(matchableAccount){
+                                    getUserByUID(matchableAccount.owner).then( user => {
+                                        const userAccount = <UserService> user.docs[0].data();
+                                        res.json((userAccount))
+                                    }).catch(error => {
+                                        console.log(error);
+                                    })
+                                }
                             });
                         }
                         else{
