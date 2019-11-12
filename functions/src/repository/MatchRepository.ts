@@ -44,7 +44,7 @@ export const getMatchableFirestoreAccount = (matcher: AccountService, range: Mat
    WHERE last_match_duration = ${matcher.last_match_duration}
    AND last_match_type = "${matcher.last_match_type}"
    AND matched = ${false}
-   AND last_matchable_time > ${timeOfMatch.getTime()- 41} 
+   AND last_matchable_time > ${timeOfMatch.getTime()- 41000} 
    ORDER BY last_matchable_time DESC, elo_rating DESC LIMIT 30`);
 };
 
