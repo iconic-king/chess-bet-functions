@@ -40,13 +40,6 @@ export const getMatchableFirestoreAccount = (matcher: AccountService, range: Mat
   const timeOfMatch = new Date(matcher.last_matchable_time);
   const fireSQL = new FireSQL(firestoreDatabase);
   
-  console.log(`SELECT * FROM accounts
-  WHERE last_match_duration = ${matcher.last_match_duration}
-  AND last_match_type = "${matcher.last_match_type}"
-  AND matched = ${false}
-  AND last_matchable_time > ${timeOfMatch.getTime()- 41} 
-  ORDER BY last_match_time DESC, elo_rating DESC LIMIT 30`);
-  
   return fireSQL.query(`SELECT * FROM accounts
    WHERE last_match_duration = ${matcher.last_match_duration}
    AND last_match_type = "${matcher.last_match_type}"
