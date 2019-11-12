@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { AccountService,AccountEvent, UserService } from '../service/AccountService';
+import { MatchType } from '../domain/MatchType';
 /**
  * @author Collins Magondu
  */
@@ -28,7 +29,15 @@ export const createUserAccount =  (uid:string) => {
     currency : "" ,
     elo_rating : MIN_ELO_RATING ,
     owner : uid,
-    matches:[]
+    matches:[],
+    last_match_amount : {
+      currency: 'KSH',
+      amount: 0.00
+    },
+    last_match_duration: 0, // Minutes
+    last_match_type: MatchType.NO_TYPE,
+    last_matchable_time: 0,
+    matched : false
   }
   return firestoreDatabase.collection("accounts").add(account);
 }
@@ -52,6 +61,10 @@ export const createUser = (user:admin.auth.UserRecord) => {
 
 export const getUserByEmail = (user: admin.auth.UserRecord) => {
   return firestoreDatabase.collection("users").where('email', "==", user.email).get();
+}
+
+export const getUserByUID = (uid: string) => {
+  return firestoreDatabase.collection("users").where("uid", "==", uid).get();
 }
 
 export const getUserAccount = (uid:string) => {

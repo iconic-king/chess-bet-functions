@@ -1,14 +1,11 @@
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange , MatchableAccount, MatchablePlayOnlineAccount, MatchedPlayOnlineAccount, MatchService, MatchDetailsService} from '../service/AccountService';
+import { AccountService, MatchRange ,MatchService, MatchDetailsService, UserService} from '../service/AccountService';
 
-import { setMatchableAccount, 
-    getMatchableAccountOnRangedEloRating, 
-    getMatchableAccountOnExactEloRating, 
+import { setMatchableAccount,
     setUpMatch,
-    getMatchableAccount,
-    getMatch} from '../repository/MatchRepository';
-import { getUserAccount, updateAccount} from "../repository/UserRepository";
-import { timeDifferenceCalculator } from '../utils/TimeUtil'   
+    getMatch,
+    getMatchableFirestoreAccount} from '../repository/MatchRepository';
+import { getUserAccount, updateAccount, getUserByUID} from "../repository/UserRepository";
 import { MatchResult } from '../service/MatchService';
 
 export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
@@ -37,64 +34,64 @@ export const createMatchabableAccountImplementation = (res : Response, req: Requ
         console.log(error.message);
         res.status(403).send("Forbidden");
     });
-}
+} 
 
 export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => { 
-    const timeOfMatch : Date = new Date();
-    // TODO Use matchable account repository function
         getUserAccount(req.query.uid).get()
         .then((snapshot) => {
             if(snapshot.size !== 0){
                 try{
-                    const matcher = <AccountService>snapshot.docs[0].data();
-                    let getMatchableAccountPromise;
-                    let matched:boolean = false;
-                    if(req.query.start_at !== undefined && req.query.end_at !== undefined ){                                          
-                        const range : MatchRange = {
-                            start_at: parseInt(req.query.start_at),
-                            end_at : parseInt(req.query.end_at)
+                    const matcher = <AccountService>snapshot.docs[0].data();                
+                    let range : MatchRange;
+
+                    if(req.query.start_at === undefined || req.query.end_at === undefined){
+                        range = {
+                            start_at: 100,
+                            end_at:100
                         }
-                        // Ranged elo rating
-                        getMatchableAccountPromise  = getMatchableAccountOnRangedEloRating(matcher,range);
+                    } else {
+                        range = {
+                            start_at: parseInt(req.query.start_at),
+                            end_at:parseInt(req.query.end_at)
+                        }
                     }
-                    else {
-                        // Exact elo rating
-                        getMatchableAccountPromise =  getMatchableAccountOnExactEloRating(matcher);
-                    }
-                    getMatchableAccountPromise
-                    // tslint:disable-next-line: no-shadowed-variable
-                    .then((snapshot)=>{
-                        if(snapshot !== null) {      
-                         snapshot.forEach(element => {
-                            // tslint:disable-next-line: no-shadowed-variable
-                            let account = <MatchableAccount> element.val();
-                                if(account.match_type === req.query.match_type && !matched){
-                                    const timeDiference = timeDifferenceCalculator(timeOfMatch, account.date_created);
-                                    if(timeDiference >= 0 && timeDiference <= 40) {
-                                    if((account.match_type.toString() === "PLAY_ONLINE") && 
-                                        (account.matchable === true) && (account.matched === false) && (account.owner !== matcher.owner)) {
-                                        account = <MatchablePlayOnlineAccount> element.val();
-                                        matched = true;
-                                        setUpMatch(account.owner, matcher.owner, account.match_type, (uid:string) =>{
-                                                // tslint:disable-next-line: no-shadowed-variable
-                                                getMatchableAccount(uid).then((snapshot) =>{
-                                                    res.json(<MatchedPlayOnlineAccount> snapshot.val());
-                                                }).catch((err)=>{
-                                                    console.error(err);                                    
-                                                })
-                                        });
-                                    }
-                               }
-                            }
-                         });
-                         if(!matched){
+                    let matchableAccount:AccountService | null = null;
+                    
+                    // Test Purposes
+                    getMatchableFirestoreAccount(matcher, range).then(result => {
+                        const accounts = <Array<AccountService>> result;
+                        // tslint:disable-next-line: prefer-for-of
+                        console.log("Matcher", matcher);
+                        console.log("Accounts", accounts);
+                        
+                        
+                        for (const account of accounts) {
+                            if((account.elo_rating >= (matcher.elo_rating - range.start_at)) &&  (account.elo_rating <= (matcher.elo_rating + range.end_at) && (matcher.owner !== account.owner))){
+                                matchableAccount = account;
+                                break;
+                            }     
+                        }
+                        // A candidate has been found
+                        if(matchableAccount !== null){
+                            setUpMatch(matchableAccount.owner,matcher.owner, matcher.last_match_type, () =>  {
+                                if(matchableAccount){
+                                    getUserByUID(matchableAccount.owner).then( user => {
+                                        const userAccount = <UserService> user.docs[0].data();
+                                        res.json((userAccount))
+                                    }).catch(error => {
+                                        console.log(error);
+                                    })
+                                }
+                            });
+                        }
+                        else{
                             res.status(404).send("No Matchable Account");
-                         }
-                    }
-                   })
-                   .catch((error)=>{
-                    console.log(error.message);
-                   })
+                        }
+                    }).catch(error => {
+                        console.error(error);
+                    })
+                
+                    console.log("done execution");
                 }catch(exception){
                     res.status(403).send("Forbidden");
                 }
@@ -104,8 +101,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
           console.log(error.message);
           res.status(403).send("Forbidden");
         });
-} 
-
+}
 
 function expectedScore (rating: number, opponent_rating:number) : number {
     return 1 / (1 + (Math.pow(10, (opponent_rating - rating)/ 400)));
