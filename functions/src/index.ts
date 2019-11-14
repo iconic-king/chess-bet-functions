@@ -10,11 +10,19 @@ const serviceAccount = require('../chess-bet-creds.json');
 const path = require("path");
 const os = require("os");
 const spawn = require("child-process-promise").spawn;
-
+const express = require('express');
+const cors = require('cors');
+const app = express();
 admin.initializeApp({
     credential : admin.credential.cert(serviceAccount),
     databaseURL : "https://chessbet-app-com-v1.firebaseio.com"
 });
+
+/**
+ *  Server Initialization Functions
+ */
+
+ app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
 import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
@@ -27,9 +35,11 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
 /**
  * This function is used to create a matchable account
  */
-export const createUserMatchableAccount =  functions.https.onRequest((req,res) => {
+
+ app.post('/createUserMatchableAccount',(req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
     
     if(req.method === 'POST'){
       createMatchabableAccountImplementation(res, req);
@@ -48,18 +58,20 @@ export const createUserMatchableAccount =  functions.https.onRequest((req,res) =
  *  This function is used to get an matchable that can trigger a match
  *  Based on time of creation of the matchable, match type or elo rating range of the specific user requesting the match
  */
-export const getMatchableAccountOnEloRating = functions.https.onRequest((req, res) => {
+app.post('/getMatchableAccountOnEloRating',(req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
 
     if(req.method === 'POST'){
         createMatchOnEloRatingImplementation(res,req);
     }
 });
 
-export const evaluateMatch = functions.https.onRequest((req, res) =>{
+app.post('/evaluateMatch',(req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
 
     if(req.method === 'POST'){
         evaluateAndStoreMatch(req,res);
@@ -112,3 +124,7 @@ export const resizeProfilePhotos = functions.storage.object().onFinalize(event =
     });
 });
 // ----------------------------- STORAGE FUNCTIONS START  --------------------------------------------
+
+
+// Expose Express API as a single function
+exports.function = functions.https.onRequest(app);

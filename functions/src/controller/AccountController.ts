@@ -1,5 +1,5 @@
-import { auth } from 'firebase-admin';
 import {createUser, createUserAccount, getUserByEmail} from '../repository/UserRepository'
+import { auth } from 'firebase-admin';
 
 export const createUserAccountImplementation = (user : auth.UserRecord) => {
     getUserByEmail(user).then((snapshot)=>{
