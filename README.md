@@ -22,6 +22,17 @@ firebase auth:import users.json --hash-algo=scrypt --rounds=8 --mem-cost=14
 npm install --save firebase-functions@latest
 ```
 
+#### Match Queue
+
+**Specs**
+
+```
+    const spec_1 = {
+        in_progress_state: "matchable_account_creation_in_progress",
+        finished_state: "matchable_account_creation_finished",
+    }
+```
+
 #### Security
 
 . Deploy Database Rules

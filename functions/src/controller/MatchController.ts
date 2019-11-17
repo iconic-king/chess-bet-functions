@@ -1,12 +1,10 @@
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService, UserService} from '../service/AccountService';
+import { AccountService, MatchRange ,MatchService, MatchDetailsService} from '../service/AccountService';
 
-import { setMatchableAccount,
-    setUpMatch,
-    getMatch,
-    getMatchableFirestoreAccount} from '../repository/MatchRepository';
-import { getUserAccount, updateAccount, getUserByUID} from "../repository/UserRepository";
+import { setMatchableAccount,getMatch} from '../repository/MatchRepository';
+import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { MatchResult } from '../service/MatchService';
+import { MatchTask, addTaskToQueue } from './MatchQueue';
 
 export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
     getUserAccount(req.query.uid).get()
@@ -56,58 +54,19 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                             end_at:parseInt(req.query.end_at)
                         }
                     }
-                    let matchableAccount:AccountService;
-                    
-                    // Test Purposes
-                    getMatchableFirestoreAccount(matcher, range).then(result => {
-                        const accounts = <Array<AccountService>> result;
-                        // tslint:disable-next-line: prefer-for-of
-                        console.log("Matcher", matcher);
-                        console.log("Accounts", accounts);
-                        
-                        
-                        for (const account of accounts) {
-                            if((account.elo_rating >= (matcher.elo_rating - range.start_at)) &&  (account.elo_rating <= (matcher.elo_rating + range.end_at) && (matcher.owner !== account.owner))){
-                                matchableAccount = account;
-                                break;
-                            }     
+                    const task: MatchTask = {
+                        match_range: range,
+                        matcher : matcher,
+                    };
+                    addTaskToQueue(task, function (status: number) {
+                        if(status === 0){
+                            res.status(200).send(matcher);
                         }
-                        // A candidate has been found
-                        if(matchableAccount !== undefined){
-                            setUpMatch(matchableAccount.owner,matcher.owner, matcher.last_match_type, () =>  {
-                                matcher.matched = true;
-                                matchableAccount.matched = true;
-                                updateAccount(matcher).then(() => {
-                                    updateAccount(matchableAccount).then(()=>{
-                                        getUserByUID(matchableAccount.owner).then( user => {
-                                            const userAccount = <UserService> user.docs[0].data();
-                                            res.json((userAccount))
-                                        }).catch(error => {
-                                            res.status(403);
-                                            res.json((error))
-                                            console.log(error);
-                                        })
-                                    }).catch(error => {
-                                        res.status(403);
-                                        res.json((error))
-                                        console.error(error);
-                                    });
-                                }).catch(error => {
-                                    res.status(403);
-                                    res.json((error))
-                                   console.error(error);                                    
-                                })
-
-                            });
+                        else {
+                            // Send forbidden request
+                            res.status(403).send(matcher);
                         }
-                        else{
-                            res.status(404).send("No Matchable Account");
-                        }
-                    }).catch(error => {
-                        console.error(error);
-                    })
-                
-                    console.log("done execution");
+                    });
                 }catch(exception){
                     res.status(403).send("Forbidden");
                 }
