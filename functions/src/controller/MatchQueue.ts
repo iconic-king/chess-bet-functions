@@ -71,9 +71,12 @@ export function createMatchQueue() {
                     })
 
                 });
-            }
-            else {
-                reject(task);
+            } else {
+                removeTask(task._id).then(()=>{
+                    reject(task);
+                }).catch(error => {
+                     reject(error);
+                });
             }
         }).catch(error => {
             console.error(error);
