@@ -16,7 +16,8 @@ export const createMatchabableAccountImplementation = (res : Response, req: Requ
                 const account = <AccountService> snapshot.docs[0].data();
                 setMatchableAccount(account, req.query.match_type)
                 .then(() => {
-                    res.status(200).send("Done :-)") // Ready to match
+                    // Return the account
+                    res.status(200).send(account) // Ready to match
                 }).catch((error) =>{
                     console.log(error.message);
                     
@@ -36,7 +37,7 @@ export const createMatchabableAccountImplementation = (res : Response, req: Requ
     });
 } 
 
-export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => { 
+export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => {
         getUserAccount(req.query.uid).get()
         .then((snapshot) => {
             if(snapshot.size !== 0){
@@ -55,7 +56,7 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                             end_at:parseInt(req.query.end_at)
                         }
                     }
-                    let matchableAccount:AccountService | null = null;
+                    let matchableAccount:AccountService;
                     
                     // Test Purposes
                     getMatchableFirestoreAccount(matcher, range).then(result => {
@@ -72,16 +73,31 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                             }     
                         }
                         // A candidate has been found
-                        if(matchableAccount !== null){
+                        if(matchableAccount !== undefined){
                             setUpMatch(matchableAccount.owner,matcher.owner, matcher.last_match_type, () =>  {
-                                if(matchableAccount){
-                                    getUserByUID(matchableAccount.owner).then( user => {
-                                        const userAccount = <UserService> user.docs[0].data();
-                                        res.json((userAccount))
+                                matcher.matched = true;
+                                matchableAccount.matched = true;
+                                updateAccount(matcher).then(() => {
+                                    updateAccount(matchableAccount).then(()=>{
+                                        getUserByUID(matchableAccount.owner).then( user => {
+                                            const userAccount = <UserService> user.docs[0].data();
+                                            res.json((userAccount))
+                                        }).catch(error => {
+                                            res.status(403);
+                                            res.json((error))
+                                            console.log(error);
+                                        })
                                     }).catch(error => {
-                                        console.log(error);
-                                    })
-                                }
+                                        res.status(403);
+                                        res.json((error))
+                                        console.error(error);
+                                    });
+                                }).catch(error => {
+                                    res.status(403);
+                                    res.json((error))
+                                   console.error(error);                                    
+                                })
+
                             });
                         }
                         else{
