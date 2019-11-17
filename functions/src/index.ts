@@ -26,6 +26,7 @@ admin.initializeApp({
 
 import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
+import {createMatchQueue, addSpecs } from './controller/MatchQueue';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -58,6 +59,7 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
  *  This function is used to get an matchable that can trigger a match
  *  Based on time of creation of the matchable, match type or elo rating range of the specific user requesting the match
  */
+
 app.post('/getMatchableAccountOnEloRating',(req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -65,6 +67,21 @@ app.post('/getMatchableAccountOnEloRating',(req, res) => {
 
     if(req.method === 'POST'){
         createMatchOnEloRatingImplementation(res,req);
+    }
+});
+
+ // Creates a match queue
+createMatchQueue();
+
+/**
+ * Should only be used when adding a new spec before go live of a queue 
+ */
+app.post('/addSpecs', (req,res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST'){
+        addSpecs();
     }
 });
 
