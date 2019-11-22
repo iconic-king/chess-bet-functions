@@ -78,6 +78,11 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
         });
 }
 
+
+export function setMatchOnChallangeAccepted(req: Request, res: Response) {
+ // Supply challange id
+}
+
 function expectedScore (rating: number, opponent_rating:number) : number {
     return 1 / (1 + (Math.pow(10, (opponent_rating - rating)/ 400)));
 }
