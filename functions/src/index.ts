@@ -24,15 +24,35 @@ admin.initializeApp({
 
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
-import {createMatchOnEloRatingImplementation, createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
+import { createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
-import {createMatchQueue, addSpecs } from './controller/MatchQueue';
+import { addSpecs } from './controller/MatchQueue';
+import { Challenge } from './domain/Challenge';
+import { setUpMatch } from './repository/MatchRepository';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
 });
+
+/**
+ *  Attempts to listener to any update on a challenge in order to set a match
+ * 
+ * 
+ * */ 
+export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onUpdate((snap, context) => {
+    const challenge = <Challenge> snap.after.data();
+    if(challenge.accepted){
+        // Handle set up of match
+        setUpMatch(challenge.owner, challenge.requester, challenge.matchType, () => {
+            console.log("Match created : ", challenge);
+        });
+        return true;
+    }
+    return false;
+});
+
 /**
  * This function is used to create a matchable account
  */
@@ -54,24 +74,6 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
 
 
 // ----------------------------- MATCH SERVICE START ----------------------------------------------
-
-/**
- *  This function is used to get an matchable that can trigger a match
- *  Based on time of creation of the matchable, match type or elo rating range of the specific user requesting the match
- */
-
-app.post('/getMatchableAccountOnEloRating',(req, res) => {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'POST');
-    res.set( "Access-Control-Allow-Headers", "Content-Type");
-
-    if(req.method === 'POST'){
-        createMatchOnEloRatingImplementation(res,req);
-    }
-});
-
- // Creates a match queue
-createMatchQueue();
 
 /**
  * Should only be used when adding a new spec before go live of a queue 
