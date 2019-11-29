@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService, MatchableAccount, MatchablePlayOnlineAccount, MatchService} from '../service/AccountService';
+import { MatchableAccount, MatchablePlayOnlineAccount, MatchService} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 
 const realtimeDatabase = admin.database();
@@ -8,27 +8,26 @@ const matchableReference = realtimeDatabase.ref('matchables');
 const matchesReference = realtimeDatabase.ref('matches');
 // const accountCollection = firestoreDatabase.collection("accounts");
 
-
-export const setMatchableAccount =  (account:AccountService,matchType:MatchType) =>{
+export const setMatchableAccount =  (matchableAccount: MatchableAccount) =>{
     let matchable:MatchableAccount;
-    if(matchType === MatchType.PLAY_ONLINE){ // Describes Play Online Account
-        matchable = new MatchablePlayOnlineAccount(account.owner,
+    if(matchableAccount.match_type === MatchType.PLAY_ONLINE){ // Describes Play Online Account
+        matchable = new MatchablePlayOnlineAccount(matchableAccount.owner,
             true,
             false,
-            account.elo_rating,
-            matchType,
-            true)
-            return matchableReference.child(account.owner).set(matchable);
+            matchableAccount.elo_rating,
+            matchableAccount.match_type,
+            true, matchableAccount.duration)
+            return matchableReference.child(matchableAccount.owner).set(matchable);
         }
     else {
-        matchable = new MatchableAccount(account.owner,
+        matchable = new MatchableAccount(matchableAccount.owner,
             true,
             false,
-            account.elo_rating,
-            matchType,
-            true)
+            matchableAccount.elo_rating,
+            matchableAccount.match_type,
+            true, matchableAccount.duration)
     }
-    return matchableReference.child(account.owner).set(matchable);
+    return matchableReference.child(matchableAccount.owner).set(matchable);
 }
 
 export const getMatchableAccount = (uid: string) => {
@@ -43,7 +42,7 @@ export const getMatchableAccount = (uid: string) => {
      matchId: matchId
    })
 }
-
+// TODO Add duration and date of match creaton
 export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
     const match:MatchService = {
         match_type : match_type,
