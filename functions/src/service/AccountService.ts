@@ -42,7 +42,7 @@ export interface Amount {
     currency: string;
     amount: number;
 }
-
+// Match interface should be PGN and FEN compatible
 export interface MatchService{
     match_type : MatchType,
     players : {
@@ -50,12 +50,14 @@ export interface MatchService{
          owner :string;
          from : number;
          to: number;
+         pgn: string;
          events : Array<MatchEvent> ;
       }
       WHITE :{
         owner :string
         from : number;
         to: number;
+        pgn: string;
         events : Array<MatchEvent>;
       }
     }

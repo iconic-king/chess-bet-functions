@@ -52,12 +52,14 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
              owner :black,
              from : 0,
              to: 0,
+             pgn: '',
              events : []
           },
           WHITE :{
             owner :white ,
             from : 0, 
             to: 0,
+            pgn: '',
             events : []
           }
         },
