@@ -53,6 +53,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
              from : 0,
              to: 0,
              pgn: '',
+             gameTimeLeft: 0,
              events : []
           },
           WHITE :{
@@ -60,6 +61,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
             from : 0, 
             to: 0,
             pgn: '',
+            gameTimeLeft: 0,
             events : []
           }
         },

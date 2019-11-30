@@ -51,6 +51,7 @@ export interface MatchService{
          from : number;
          to: number;
          pgn: string;
+         gameTimeLeft: number; // Usefull in controlling the timer
          events : Array<MatchEvent> ;
       }
       WHITE :{
@@ -58,6 +59,7 @@ export interface MatchService{
         from : number;
         to: number;
         pgn: string;
+        gameTimeLeft: number; // Usefull in controlling the timer
         events : Array<MatchEvent>;
       }
     }
