@@ -36,6 +36,7 @@ interface MatchableAccountService{
     elo_rating: number;
     match_type: MatchType;
     date_created: string;
+    duration:number;
 }
 
 export interface Amount {
@@ -83,6 +84,7 @@ export interface MatchDetailsService {
 }
 
 export class MatchableAccount implements MatchableAccountService{
+    duration: number;
     date_created: string;
     owner: string;
     matchable: boolean;
@@ -91,13 +93,14 @@ export class MatchableAccount implements MatchableAccountService{
     match_type: MatchType;
     online:boolean;
     constructor(owner: string,matchable :boolean, matched :boolean,
-        elo_rating: number,match_type: MatchType,online:boolean){
+        elo_rating: number,match_type: MatchType,online:boolean, duration: number){
            this.owner = owner;
            this.matchable = matchable;
            this.elo_rating = elo_rating;
            this.matched = matched;
            this.match_type = match_type;
-           this.online = online; 
+           this.online = online;
+           this.duration = duration; 
            this.date_created = new Date().toLocaleString();
     }
 }
@@ -111,8 +114,8 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
     matchId: string;
     constructor (owner: string,matchable :boolean, matched :boolean,
         elo_rating: number,match_type: MatchType,online:boolean,
-        opponent: string, matchId: string){
-            super(owner, matchable, matched, elo_rating, match_type, online);
+        opponent: string, matchId: string, duration: number){
+            super(owner, matchable, matched, elo_rating, match_type, online, duration);
             this.matchId = matchId;
             this.opponent = opponent;
         }

@@ -1,5 +1,8 @@
+/**
+ * @author Collins Magondu
+ */
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService} from '../service/AccountService';
+import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
 import { setMatchableAccount,getMatch} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
@@ -7,32 +10,14 @@ import { MatchResult } from '../service/MatchService';
 import { MatchTask, addTaskToQueue } from './MatchQueue';
 
 export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
-    getUserAccount(req.query.uid).get()
-    .then(snapshot => {
-        if(snapshot.size !== 0){
-            try{
-                const account = <AccountService> snapshot.docs[0].data();
-                setMatchableAccount(account, req.query.match_type)
-                .then(() => {
-                    // Return the account
-                    res.status(200).send(account) // Ready to match
-                }).catch((error) =>{
-                    console.log(error.message);
-                    
-                })
-            }catch(exception){
-                console.log(exception.message);
-                res.status(403).send("Forbidden");
-            }
-        }
-        else{
-            res.status(404).send("User unique id does not exists");
-        }
-    })
-    .catch(error => {
+    const matchableAccount = <MatchableAccount> req.body; // JSON  MATCHABLE OBJECT
+    setMatchableAccount(matchableAccount)
+    .then(() => {
+        // Return the account
+        res.status(200).send(matchableAccount) // Ready to match
+    }).catch((error) =>{
         console.log(error.message);
-        res.status(403).send("Forbidden");
-    });
+    });         
 } 
 
 export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => {
