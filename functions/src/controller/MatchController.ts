@@ -4,10 +4,11 @@
 import { Response, Request } from 'firebase-functions';
 import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
-import { setMatchableAccount,getMatch} from '../repository/MatchRepository';
+import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { MatchResult } from '../service/MatchService';
 import { MatchTask, addTaskToQueue } from './MatchQueue';
+import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
 
 export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
     const matchableAccount = <MatchableAccount> req.body; // JSON  MATCHABLE OBJECT
@@ -97,21 +98,29 @@ function decidePlayerRating (account_one:AccountService , account_two:AccountSer
   return account_one.owner === uid ? account_one.elo_rating : account_two.elo_rating;
 }
 
+/* Ensures points taken from one player are given to another no points left*/
+function tradePoints(pointsBefore: number, pointsAfter:number){
+    return pointsAfter - pointsBefore;
+}
 
-export const evaluateAndStoreMatch =  (req: Request, res: Response) => {
-    const matchResult = <MatchResult> req.body;     
+
+export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Function) => {
+    console.log(matchResult.pgnText);
     let account_one:AccountService;
     let account_two:AccountService;
-    // tslint:disable-next-line: no-floating-promises
     getUserAccount(matchResult.gain).get().then((snapshot) => {
-            account_one = <AccountService> snapshot.docs[0].data();
-
-        // tslint:disable-next-line: no-floating-promises
+        account_one = <AccountService> snapshot.docs[0].data();
         getUserAccount(matchResult.loss).get().then((snapshot2) => {
             account_two = <AccountService> snapshot2.docs[0].data();
+            const account_one_elo = account_one.elo_rating;
             account_one = updateAccountEloRating(account_one, account_two.elo_rating, matchResult);
-            account_two = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
-
+            const newPoints = tradePoints(account_one_elo, account_one.elo_rating);
+            if(newPoints > 0) {
+               account_two.elo_rating-= newPoints;   
+            } else {
+               account_two.elo_rating+= (newPoints *  -1)
+            }
+            // account_two = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
             getMatch(matchResult.matchId).then((snapshot3)=>{
                 if(snapshot3.exists){
                 const match = <MatchService>snapshot3.val();
@@ -131,7 +140,8 @@ export const evaluateAndStoreMatch =  (req: Request, res: Response) => {
                             events : match.players.WHITE.events,
                             type : 'WHITE'
                         }
-                    ]
+                    ],
+                    matchPgn: matchResult.pgnText
                 }
                 if(account_one.matches === undefined){
                     account_one.matches = new Array<MatchDetailsService>();
@@ -140,22 +150,38 @@ export const evaluateAndStoreMatch =  (req: Request, res: Response) => {
                     account_two.matches = new Array<MatchDetailsService>();
                 }
                 account_one.matches.push(match_details);
-                account_two.matches.push(match_details);
+                account_two.matches.push(match_details); 
                 updateAccount(account_one).then(()=>{
                     updateAccount(account_two).then(()=>{
                         // Confirms match has been scored
-                        res.send(match_details);
+                        removeMatchable(account_one.owner, ()=> {
+                            removeMatchable(account_two.owner, ()=>{
+                                removeMatch(matchResult.matchId, ()=>{
+                                    const evaluationResponse = <MatchEvaluationResponse> {
+                                        ownerOne : account_one.owner,
+                                        ownerTwo: account_two.owner,
+                                        ownerOneElo : account_one.elo_rating,
+                                        ownerTwoElo : account_two.elo_rating
+                                    }
+                                    callback(evaluationResponse);
+                                })
+                            });
+                        });
                     }).catch((err)=>{
-                        console.log(err.message);
+                        console.error(err.message);
                         
                     })
                 }).catch((err)=>{
-                    console.log(err.message);
+                    console.error(err.message);
                 })
             }
         }).catch((err) =>{
-            console.log(err.message);
+            console.error(err.message);
         })
+        }).catch((err) =>{
+            console.error(err.message);
         });
+    }).catch((err) =>{
+        console.error(err.message);
     });
 }

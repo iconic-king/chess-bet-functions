@@ -26,9 +26,11 @@ admin.initializeApp({
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
 import { createUserAccountImplementation } from './controller/AccountController'
-import { addSpecs } from './controller/MatchQueue';
+import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
+import { MatchResult } from './service/MatchService';
+import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -74,7 +76,8 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
 
 
 // ----------------------------- MATCH SERVICE START ----------------------------------------------
-
+    // createMatchEvaluationQueue();
+    // createMatchDeletionQueue();
 /**
  * Should only be used when adding a new spec before go live of a queue 
  */
@@ -91,9 +94,12 @@ app.post('/evaluateMatch',(req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-
     if(req.method === 'POST'){
-        evaluateAndStoreMatch(req,res);
+        const matchResult = <MatchResult> req.body;
+        evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
+            // Send Response For Analysis
+            res.send(evaluationResponse);
+        });
     }
 });
 

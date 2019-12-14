@@ -5,7 +5,7 @@ import { MatchType } from '../domain/MatchType';
 const realtimeDatabase = admin.database();
 
 const matchableReference = realtimeDatabase.ref('matchables');
-const matchesReference = realtimeDatabase.ref('matches');
+export const matchesReference = realtimeDatabase.ref('matches');
 // const accountCollection = firestoreDatabase.collection("accounts");
 
 export const setMatchableAccount =  (matchableAccount: MatchableAccount) =>{
@@ -34,14 +34,32 @@ export const getMatchableAccount = (uid: string) => {
   return matchableReference.child(uid).once('value');
 }
 
- const updateMatchedAccount = (uid:string,opponent:string,matchId:string) => {
+ const updateMatchedAccount = (uid:string,opponent:string,matchId:string,oppenentId:string) => {
    return matchableReference.child(uid).update({
      matched : true,
      matchable : false,
      opponent : opponent,
-     matchId: matchId
+     matchId: matchId,
+     opponentId: oppenentId
    })
 }
+
+export const removeMatch = (matchId: string, callback: Function) => {
+  matchesReference.child(matchId).remove().then(()=>{
+    callback()
+  }).catch((err)=>{
+    console.error(err);
+  })
+}
+
+export const removeMatchable = (matchableId: string, callback: Function) => {
+  matchableReference.child((matchableId)).remove().then(()=> {
+    callback();
+  }).catch((err)=>{
+    console.error(err);
+  });
+}
+
 // TODO Add duration and date of match creaton
 export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
     const match:MatchService = {
@@ -67,8 +85,8 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
       }
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
-           return updateMatchedAccount(white,"BLACK",matchId).then(()=>{
-               updateMatchedAccount(black,"WHITE",matchId).then(()=>{
+           return updateMatchedAccount(white,"BLACK",matchId,black).then(()=>{
+               updateMatchedAccount(black,"WHITE",matchId,white).then(()=>{
                 console.log("Match Done ;-)");
                 callback();
                })

@@ -81,6 +81,7 @@ export interface MatchDetailsService {
     match_type: MatchType;
     match_result: MatchResult; 
     players : Array<Player>;
+    matchPgn: string; //Match PGN String
 }
 
 export class MatchableAccount implements MatchableAccountService{
@@ -111,13 +112,15 @@ export class MatchablePlayOnlineAccount extends MatchableAccount{
 
 export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
     opponent : string;
+    opponentId: string;
     matchId: string;
     constructor (owner: string,matchable :boolean, matched :boolean,
         elo_rating: number,match_type: MatchType,online:boolean,
-        opponent: string, matchId: string, duration: number){
+        opponent: string, matchId: string, duration: number, opponentId: string){
             super(owner, matchable, matched, elo_rating, match_type, online, duration);
             this.matchId = matchId;
             this.opponent = opponent;
+            this.opponentId = opponentId;
         }
 }
 
