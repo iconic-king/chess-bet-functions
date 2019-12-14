@@ -6,7 +6,7 @@
       ".indexOn" : ["elo_rating","match_type"],
       ".validate" : "newData.hasChildren(['owner'])"
     },
-    "queue" : {
+    "evaluationQueue" : {
       "tasks": {
         ".read": "auth.admin === true",
         ".write":  "auth.canAddTasks === true || auth.admin === true",
