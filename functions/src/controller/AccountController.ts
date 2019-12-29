@@ -1,5 +1,6 @@
-import {createUser, createUserAccount, getUserByEmail} from '../repository/UserRepository'
+import {createUser, createUserAccount, getUserByEmail, deleteUserAccount} from '../repository/UserRepository'
 import { auth } from 'firebase-admin';
+import { removeMatchable } from '../repository/MatchRepository';
 
 export const createUserAccountImplementation = (user : auth.UserRecord) => {
     getUserByEmail(user).then((snapshot)=>{
@@ -22,4 +23,13 @@ export const createUserAccountImplementation = (user : auth.UserRecord) => {
         console.error(err);
     });
 
+}
+
+
+
+export const onUserAccountDeleted = (user: auth.UserRecord) => {
+    deleteUserAccount(user.uid);
+    removeMatchable(user.uid, () => {
+        console.log("Removed Matchable Account");
+    });
 }

@@ -83,3 +83,30 @@ export const updateAccount = (account: AccountService) => {
   });
 }
 
+export const deleteUserAccount = (uid: string) =>{
+  getUserByUID(uid).then((snapshots) => {
+    if(!snapshots.empty){
+      const doc = snapshots.docs[0];
+      // Delete user account
+      doc.ref.delete().then(() => {
+        getUserAccount(uid).get().then((snapshot) => {
+            if(!snapshot.empty){
+              const account = snapshot.docs[0];
+              account.ref.delete().then(() => {
+                console.log(`Deleted User ${uid} Operation Done`);       
+              }).catch(error =>{
+                console.error(error); 
+              });  
+            }
+        }).catch(error => {
+          console.error(error);
+        })
+      }).catch(error =>{
+        console.error(error);
+      })
+    }
+  }).catch(error => {
+    console.error(error);
+  });
+}
+

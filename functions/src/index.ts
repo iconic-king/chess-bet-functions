@@ -25,12 +25,13 @@ admin.initializeApp({
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
-import { createUserAccountImplementation } from './controller/AccountController'
+import { createUserAccountImplementation, onUserAccountDeleted } from './controller/AccountController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
+import { verifyToken } from './utils/AuthUtil';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -38,11 +39,15 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
 });
 
+/** User Account Deletion */
+export const onUserDeleted = functions.auth.user().onDelete((user) => {
+    onUserAccountDeleted(user);
+});
+
 /**
  *  Attempts to listener to any update on a challenge in order to set a match
- * 
- * 
  * */ 
+
 export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onUpdate((snap, context) => {
     const challenge = <Challenge> snap.after.data();
     if(challenge.accepted){
@@ -65,7 +70,9 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     
     if(req.method === 'POST'){
-      createMatchabableAccountImplementation(res, req);
+      verifyToken(req, res, ()=> {
+        createMatchabableAccountImplementation(res, req);
+      });
     }
     else{
         res.status(403).send("Forbidden");
@@ -84,7 +91,7 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
 app.post('/addSpecs', (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
-    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    res.set( "Access-Control-Allow-Headers", "Content-Type"); 
     if(req.method === 'POST'){
         addSpecs();
     }
@@ -95,10 +102,12 @@ app.post('/evaluateMatch',(req, res) =>{
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST'){
-        const matchResult = <MatchResult> req.body;
-        evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
-            // Send Response For Analysis
-            res.send(evaluationResponse);
+        const matchResult = <MatchResult> req.body;      
+        verifyToken(req, res, ()=> {
+            evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
+                // Send Response For Analysis
+                res.send(evaluationResponse);
+            });
         });
     }
 });

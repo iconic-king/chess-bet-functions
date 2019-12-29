@@ -17,6 +17,7 @@ export const createMatchabableAccountImplementation = (res : Response, req: Requ
         // Return the account
         res.status(200).send(matchableAccount) // Ready to match
     }).catch((error) =>{
+        // TODO respond with relevant error
         console.log(error.message);
     });         
 } 
@@ -116,9 +117,9 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
             account_one = updateAccountEloRating(account_one, account_two.elo_rating, matchResult);
             const newPoints = tradePoints(account_one_elo, account_one.elo_rating);
             if(newPoints > 0) {
-               account_two.elo_rating-= newPoints;   
+               account_two.elo_rating -= newPoints;   
             } else {
-               account_two.elo_rating+= (newPoints *  -1)
+               account_two.elo_rating += (newPoints *  -1)
             }
             // account_two = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
             getMatch(matchResult.matchId).then((snapshot3)=>{
