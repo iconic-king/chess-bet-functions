@@ -37,7 +37,9 @@ export const createUserAccount =  (uid:string) => {
     last_match_duration: 0, // Minutes
     last_match_type: MatchType.NO_TYPE,
     last_matchable_time: 0,
-    matched : false
+    matched : false,
+    current_challenge_id: '',
+    current_challenge_timestamp: 0
   }
   return firestoreDatabase.collection("accounts").add(account);
 }

@@ -27,6 +27,8 @@ export interface AccountService{
     last_match_amount: Amount;
     matched: boolean;
     matches: Array<MatchDetailsService>;
+    current_challenge_id:string;
+    current_challenge_timestamp: number;
 }
 
 interface MatchableAccountService{
