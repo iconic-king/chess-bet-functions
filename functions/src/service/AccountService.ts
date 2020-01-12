@@ -66,6 +66,7 @@ export interface MatchService{
         events : Array<MatchEvent>;
       }
     }
+    scheduleEvaluation:boolean; // Used for immediate evaluation of a match
 }
 /**
  *  Will be used by the endpoint to get match details while also passing the result

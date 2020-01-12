@@ -56,6 +56,7 @@ export const removeMatchable = (matchableId: string, callback: Function) => {
   matchableReference.child((matchableId)).remove().then(()=> {
     callback();
   }).catch((err)=>{
+    callback();
     console.error(err);
   });
 }
@@ -82,6 +83,7 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
             events : []
           }
         },
+        scheduleEvaluation: false
       }
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
