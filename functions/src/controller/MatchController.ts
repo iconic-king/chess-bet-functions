@@ -65,11 +65,6 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
         });
 }
 
-
-export function setMatchOnChallangeAccepted(req: Request, res: Response) {
- // Supply challange id
-}
-
 function expectedScore (rating: number, opponent_rating:number) : number {
     return 1 / (1 + (Math.pow(10, (opponent_rating - rating)/ 400)));
 }
@@ -87,7 +82,7 @@ function updateAccountEloRating( account:AccountService,opponent_rating:number, 
         // Draw
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 0.5 , account.elo_rating);
     }
-    else{
+    else if(account.owner === matchResult.loss){
         // Lost
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 0 , account.elo_rating);
     }
@@ -95,11 +90,12 @@ function updateAccountEloRating( account:AccountService,opponent_rating:number, 
     return account
 }
 
+/** Decides player rating on player uid */
 function decidePlayerRating (account_one:AccountService , account_two:AccountService, uid:string) : number {
   return account_one.owner === uid ? account_one.elo_rating : account_two.elo_rating;
 }
 
-/* Ensures points taken from one player are given to another no points left*/
+/* Ensures points taken from one player are given to another no floating points left*/
 function tradePoints(pointsBefore: number, pointsAfter:number){
     return pointsAfter - pointsBefore;
 }
@@ -116,10 +112,10 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
             const account_one_elo = account_one.elo_rating;
             account_one = updateAccountEloRating(account_one, account_two.elo_rating, matchResult);
             const newPoints = tradePoints(account_one_elo, account_one.elo_rating);
-            if(newPoints > 0) {
+            if(newPoints >= 0) {
                account_two.elo_rating -= newPoints;   
             } else {
-               account_two.elo_rating += (newPoints *  -1)
+               account_two.elo_rating += (newPoints *  -1) // Ensure accounts do not have negative values
             }
             // account_two = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
             getMatch(matchResult.matchId).then((snapshot3)=>{
