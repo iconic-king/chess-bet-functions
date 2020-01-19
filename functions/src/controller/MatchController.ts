@@ -182,3 +182,33 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
         console.error(err.message);
     });
 }
+
+
+export const forceEvaluateMatch = (res,req) => {
+    const matchId = req.query.matchId;
+    getMatch(matchId).then(snapshot => {
+        if(snapshot.exists){
+        const match = <MatchService> snapshot.val();
+        const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+        ? match.players.WHITE.owner : match.players.BLACK.owner; 
+        const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+        ? match.players.BLACK.owner : match.players.WHITE.owner; 
+    
+        const matchResult: MatchResult = {
+          pgnText : match.players.WHITE.pgn,   
+          matchId : snapshot.key || '',
+          matchStatus: "ABANDONMENT",
+          gain: gain,
+          loss: loss,
+          _id: snapshot.key || ''
+        }
+        evaluateAndStoreMatch(matchResult, (evaluationResponse) => {
+            console.log("Match Evaluation Done ", evaluationResponse);
+        }); 
+        res.status(200).send();
+        }
+    }).catch(error =>{
+        console.error(error);
+        res.status(403).send();
+    });
+}

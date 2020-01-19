@@ -45,6 +45,7 @@ export const getMatchableAccount = (uid: string) => {
 }
 
 export const removeMatch = (matchId: string, callback: Function) => {
+  console.log("Removing match id ", matchId);
   matchesReference.child(matchId).remove().then(()=>{
     callback()
   }).catch((err)=>{
@@ -56,7 +57,6 @@ export const removeMatchable = (matchableId: string, callback: Function) => {
   matchableReference.child((matchableId)).remove().then(()=> {
     callback();
   }).catch((err)=>{
-    callback();
     console.error(err);
   });
 }

@@ -24,7 +24,7 @@ admin.initializeApp({
 
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
-import { createMatchabableAccountImplementation, evaluateAndStoreMatch} from './controller/MatchController'
+import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
 import { createUserAccountImplementation, onUserAccountDeleted } from './controller/AccountController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
@@ -32,7 +32,6 @@ import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
-import { MatchService } from './service/AccountService';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -61,31 +60,21 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
     return false;
 });
 
-export const onMatchScheduledForEvaluation = functions.database.ref('matches/{matchId}').onUpdate((snap, context) =>{
-  try{
-    const match = <MatchService> snap.after.val();
-    if(match.scheduleEvaluation) {
-        const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-        ? match.players.WHITE.owner : match.players.BLACK.owner; 
-        const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-        ? match.players.BLACK.owner : match.players.WHITE.owner; 
-    
-        const matchResult: MatchResult = {
-          pgnText : match.players.WHITE.pgn,   
-          matchId : snap.after.key,
-          matchStatus: "ABANDONMENT",
-          gain: gain,
-          loss: loss,
-          _id: snap.after.key
-        }
-    evaluateAndStoreMatch(matchResult, (evaluationResponse) => {
-        console.log("Match Evaluation Done ", evaluationResponse);
-    }); 
+/**
+ * Allows matches that did not end correctly to be forcefully evaluated
+ */
+app.post('/forceEvaluateMatch', (req,res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST') {
+        verifyToken(req, res, ()=> {
+            forceEvaluateMatch(req, res);
+        });
+    } else{
+        res.status(403).send("Forbidden");
     }
-  }catch(error){
-    console.error(error.message);
-  }
-});
+ });
 
 /**
  * This function is used to create a matchable account
