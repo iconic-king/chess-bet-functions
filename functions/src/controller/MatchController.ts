@@ -185,7 +185,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
 
 
 export const forceEvaluateMatch = (res,req) => {
-    const matchId = req.query.matchId;
+    const matchId = req.body;
     getMatch(matchId).then(snapshot => {
         if(snapshot.exists){
         const match = <MatchService> snapshot.val();

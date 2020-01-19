@@ -64,6 +64,7 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
  * Allows matches that did not end correctly to be forcefully evaluated
  */
 app.post('/forceEvaluateMatch', (req,res) => {
+    console.log("Request ", req.body);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
