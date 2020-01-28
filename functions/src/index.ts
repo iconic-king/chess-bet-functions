@@ -32,6 +32,7 @@ import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
+import { sendFCMMessage } from './controller/FCMController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -72,6 +73,19 @@ app.post('/forceEvaluateMatch', (req,res) => {
         verifyToken(req, res, ()=> {
             forceEvaluateMatch(req, res);
         });
+    } else{
+        res.status(403).send("Forbidden");
+    }
+ });
+
+ app.post("/sendFCMMessage", (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST') {
+        verifyToken(req, res, ()=> {
+            sendFCMMessage(req, res);
+        }); 
     } else{
         res.status(403).send("Forbidden");
     }

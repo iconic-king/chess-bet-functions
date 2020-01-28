@@ -12,9 +12,10 @@
   },
   "compileOnSave": true,
   "include": [
-    "src"
+    "src", "src/__tests__"
   ],
   "typeRoots": [
     "lib"
-  ]
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

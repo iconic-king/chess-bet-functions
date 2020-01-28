@@ -8,7 +8,7 @@ const matchableReference = realtimeDatabase.ref('matchables');
 export const matchesReference = realtimeDatabase.ref('matches');
 // const accountCollection = firestoreDatabase.collection("accounts");
 
-export const setMatchableAccount =  (matchableAccount: MatchableAccount) =>{
+export const setMatchableAccount =  (matchableAccount: MatchableAccount) => {
     let matchable:MatchableAccount;
     if(matchableAccount.match_type === MatchType.PLAY_ONLINE){ // Describes Play Online Account
         matchable = new MatchablePlayOnlineAccount(matchableAccount.owner,

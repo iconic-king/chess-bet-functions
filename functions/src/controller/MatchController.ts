@@ -73,7 +73,7 @@ function newRating (expected_score: number, score: number, rating: number){
     return rating + (32 * (score - expected_score));
 }
 
-function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : AccountService {
+function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : number {
     if(account.owner === matchResult.gain) {
         // Won
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 1.0, account.elo_rating);
@@ -87,7 +87,7 @@ function updateAccountEloRating( account:AccountService,opponent_rating:number, 
         account.elo_rating = newRating(expectedScore(opponent_rating,account.elo_rating), 0 , account.elo_rating);
     }
     account.elo_rating = Math.round(account.elo_rating);
-    return account
+    return account.elo_rating;
 }
 
 /** Decides player rating on player uid */
@@ -100,6 +100,33 @@ function tradePoints(pointsBefore: number, pointsAfter:number){
     return pointsAfter - pointsBefore;
 }
 
+/**
+ * Ensures points are taken from loser to winner and not derived from winning user (Algorithm Supports This)
+ * @param account_one 
+ * @param account_two 
+ * @param matchResult 
+ */
+function exchangePoints(account_one: AccountService, account_two :AccountService, matchResult: MatchResult){
+    if (matchResult.loss === account_one.owner) {
+        const account_one_elo = account_one.elo_rating;
+        account_one.elo_rating = updateAccountEloRating(account_one, account_two.elo_rating, matchResult);
+        const newPoints = tradePoints(account_one_elo, account_one.elo_rating);
+        if(newPoints >= 0) {
+           account_two.elo_rating -= newPoints;   
+        } else {
+           account_two.elo_rating += (newPoints *  -1) // Ensure accounts do not have negative values
+        }
+    } else if (matchResult.loss === account_two.owner) {
+        const account_two_elo = account_two.elo_rating;
+        account_two.elo_rating = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
+        const newPoints = tradePoints(account_two_elo, account_two.elo_rating);
+        if(newPoints >= 0) {
+           account_one.elo_rating -= newPoints;   
+        } else {
+           account_one.elo_rating += (newPoints *  -1) // Ensure accounts do not have negative values
+        }
+    }
+}
 
 export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Function) => {
     console.log(matchResult.pgnText);
@@ -109,15 +136,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
         account_one = <AccountService> snapshot.docs[0].data();
         getUserAccount(matchResult.loss).get().then((snapshot2) => {
             account_two = <AccountService> snapshot2.docs[0].data();
-            const account_one_elo = account_one.elo_rating;
-            account_one = updateAccountEloRating(account_one, account_two.elo_rating, matchResult);
-            const newPoints = tradePoints(account_one_elo, account_one.elo_rating);
-            if(newPoints >= 0) {
-               account_two.elo_rating -= newPoints;   
-            } else {
-               account_two.elo_rating += (newPoints *  -1) // Ensure accounts do not have negative values
-            }
-            // account_two = updateAccountEloRating(account_two, account_one.elo_rating, matchResult);
+            exchangePoints(account_one, account_two, matchResult);
             getMatch(matchResult.matchId).then((snapshot3)=>{
                 if(snapshot3.exists){
                 const match = <MatchService>snapshot3.val();
@@ -184,7 +203,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
 }
 
 
-export const forceEvaluateMatch = (res,req) => {
+export const forceEvaluateMatch = (req,res) => {
     const matchId = req.body;
     getMatch(matchId).then(snapshot => {
         if(snapshot.exists){
