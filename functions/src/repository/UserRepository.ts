@@ -54,8 +54,8 @@ export const createUser = (user:admin.auth.UserRecord) => {
   disabled: user.disabled,
   date_created:date ,
   date_modified:date,
-  user_name : "anonymous",
-  profile_photo_url : ''
+  user_name : user.displayName === undefined ? 'anonymous' : user.displayName,
+  profile_photo_url : user.photoURL === undefined ? '' : user.photoURL,
  }
 
  return firestoreDatabase.collection("users").doc(user.uid).set(user_account);
