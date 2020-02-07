@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService,AccountEvent, UserService } from '../service/AccountService';
+import { AccountService,AccountEvent, UserService, Permission } from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 /**
  * @author Collins Magondu
@@ -54,6 +54,7 @@ export const createUser = (user:admin.auth.UserRecord) => {
   disabled: user.disabled,
   date_created:date ,
   date_modified:date,
+  permissions:[],
   user_name : user.displayName === undefined ? 'anonymous' : user.displayName,
   profile_photo_url : user.photoURL === undefined ? '' : user.photoURL,
  }
@@ -68,6 +69,29 @@ export const getUserByEmail = (user: admin.auth.UserRecord) => {
 export const getUserByUID = (uid: string) => {
   return firestoreDatabase.collection("users").where("uid", "==", uid).get();
 }
+
+export const updateUser = (user: UserService) => {
+  return firestoreDatabase.collection("users").doc(user.uid).set(user);
+}
+
+export const updateUserPermissions = (uid, successCallBack,  errorCallback, permissions: Array<Permission>) => {
+  getUserByUID(uid).then(snapshot => {
+    const user = <UserService> snapshot.docs[0].data();
+    user.permissions = (user.permissions === undefined) ? new Array() : user.permissions;
+    permissions.forEach(permission => {
+      user.permissions.push(permission);
+    });
+    updateUser(user).then(() => {
+      successCallBack();
+    }).catch((error) => {
+      errorCallback(error);
+    });
+  }).catch(error => {
+    console.log(error);
+    errorCallback();
+  });
+}
+
 
 export const getUserAccount = (uid:string) => {
   return firestoreDatabase.collection('accounts').where('owner',"==",uid);

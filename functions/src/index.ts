@@ -25,7 +25,7 @@ admin.initializeApp({
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
-import { createUserAccountImplementation, onUserAccountDeleted } from './controller/AccountController'
+import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -74,6 +74,20 @@ app.post('/forceEvaluateMatch', (req,res) => {
             forceEvaluateMatch(req, res);
         });
     } else{
+        res.status(403).send("Forbidden");
+    }
+ });
+
+ app.post('/updateUserPermission', (req, res) => {
+    console.log("Request ", req.body);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST') {
+        verifyToken(req, res, ()=> {
+            onUserPermmissionsUpdate(req, res);
+        });
+    } else {
         res.status(403).send("Forbidden");
     }
  });

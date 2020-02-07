@@ -9,6 +9,7 @@ export interface UserService{
     date_modified: string,
     user_name: string;
     profile_photo_url:string
+    permissions: Array<Permission>
 }
 
 export interface AccountService{
@@ -149,5 +150,10 @@ export enum MatchEvent{
 export interface MatchRange {
     start_at: number;
     end_at: number;
+}
+
+export enum Permission {
+    'TOPIC_UPDATE',
+    'BLOG_UPDATE'
 }
 
