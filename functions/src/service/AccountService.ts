@@ -154,6 +154,7 @@ export interface MatchRange {
 
 export enum Permission {
     'TOPIC_UPDATE',
-    'BLOG_UPDATE'
+    'BLOG_UPDATE',
+    'CLUB_UPDATE'
 }
 
