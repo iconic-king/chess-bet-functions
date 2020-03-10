@@ -26,6 +26,7 @@ admin.initializeApp({
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
+import { createClubAccountImplementation } from './controller/ClubController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -79,7 +80,6 @@ app.post('/forceEvaluateMatch', (req,res) => {
  });
 
  app.post('/updateUserPermission', (req, res) => {
-    console.log("Request ", req.body);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
@@ -89,6 +89,19 @@ app.post('/forceEvaluateMatch', (req,res) => {
         });
     } else {
         res.status(403).send("Forbidden");
+    }
+ });
+
+ app.post('/club/createClubAccount', (req,res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST') {
+        verifyToken(req, res, () => {
+            createClubAccountImplementation(req, res);
+        });
+    } else  {
+        res.status(403).send('Forbidden')
     }
  });
 
