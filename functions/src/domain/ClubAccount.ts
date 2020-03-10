@@ -1,6 +1,6 @@
 export class ClubAccount {
     constructor(public owner: string, public clubId: string | number, public permissions: Array<Permissions>,
-        public readonly id: string, public servcieId: number, public status: Status, 
+        public id: string, public servcieId: number, public status: Status, 
         public terms_of_servcie_accepted: boolean, public events: Array<Event>) {}
 }
 
