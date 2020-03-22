@@ -6,10 +6,16 @@
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017"
+    "target": "es2017",
+    "esModuleInterop": true,
+    "noImplicitAny": false,
   },
   "compileOnSave": true,
   "include": [
-    "src"
-  ]
+    "src", "src/__tests__"
+  ],
+  "typeRoots": [
+    "lib"
+  ],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }
