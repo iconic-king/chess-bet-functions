@@ -1,7 +1,6 @@
 {
   "projects": {
-    "default": "chess-bet-test",
-    "prod": "chessbet-app-com-v1",
     "dev": "chess-bet-test",
+    "default": "chess-bet-test"
   }
 }
