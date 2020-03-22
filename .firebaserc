@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "chessbet-app-com-v1"
+    "default": "chessbet-app-com-v1",
+    "y": "chessbet-app-com-v1"
   }
 }

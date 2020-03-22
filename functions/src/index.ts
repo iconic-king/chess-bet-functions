@@ -6,18 +6,14 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
 const {Storage} = require('@google-cloud/storage');
-const serviceAccount = require('../chess-bet-creds.json');
+// const serviceAccount = require('../chess-bet-creds.json');
 const path = require("path");
 const os = require("os");
 const spawn = require("child-process-promise").spawn;
 const express = require('express');
 const cors = require('cors');
 const app = express();
-admin.initializeApp({
-    credential : admin.credential.cert(serviceAccount),
-    databaseURL : "https://chessbet-app-com-v1.firebaseio.com"
-});
-
+admin.initializeApp(functions.config().firebase);
 /**
  *  Server Initialization Functions
  */
