@@ -4,6 +4,7 @@ node_js:
 branches:
   only:
     - master
+    - dev
 script:
   - cd functions
   - npm install
