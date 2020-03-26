@@ -23,6 +23,7 @@ admin.initializeApp(functions.config().firebase);
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation } from './controller/ClubController'
+import { onRandomChallengeRecieved } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -82,6 +83,20 @@ app.post('/forceEvaluateMatch', (req,res) => {
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
             onUserPermmissionsUpdate(req, res);
+        });
+    } else {
+        res.status(403).send("Forbidden");
+    }
+ });
+
+ // Allow random challenge creation
+ app.post('/challenge/randomChallenge', (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    if(req.method === 'POST') {
+        verifyToken(req, res, ()=> {
+            onRandomChallengeRecieved(req, res);
         });
     } else {
         res.status(403).send("Forbidden");
