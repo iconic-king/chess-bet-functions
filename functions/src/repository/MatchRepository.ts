@@ -34,6 +34,7 @@ export const getMatchableAccount = (uid: string) => {
   return matchableReference.child(uid).once('value');
 }
 
+
  const updateMatchedAccount = (uid:string,opponent:string,matchId:string,oppenentId:string) => {
    return matchableReference.child(uid).update({
      matched : true,
