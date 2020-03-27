@@ -1,5 +1,6 @@
+[![Build Status](https://travis-ci.com/Magz8984/chess-bet-functions.svg?token=1t1EwrDpq3sLA8yRH7Ea&branch=master)](https://travis-ci.com/Magz8984/chess-bet-functions)
 ## chess-bet-functions
-[![Build Status](https://travis-ci.com/Magz8984/chess-bet-functions.svg?token=1t1EwrDpq3sLA8yRH7Ea&branch=master)](https://travis-ci.com/Magz8984/chess-bet-functions)Chess Bet Functions
+Chess Bet Functions
 
 #### Firebase Function Configs
 
