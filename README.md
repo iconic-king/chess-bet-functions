@@ -1,4 +1,5 @@
 ## chess-bet-functions
+[Dev Build Status](https://travis-ci.com/Magz8984/chess-bet-functions.svg?token=1t1EwrDpq3sLA8yRH7Ea&branch=git)
 Chess Bet Functions
 
 #### Firebase Function Configs
