@@ -22,7 +22,7 @@ admin.initializeApp(functions.config().firebase);
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
-import { createClubAccountImplementation } from './controller/ClubController'
+import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
 import { onRandomChallengeRecieved } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
@@ -127,6 +127,15 @@ app.post('/forceEvaluateMatch', (req,res) => {
     } else{
         res.status(403).send("Forbidden");
     }
+ });
+
+ app.get("/club/getClubAccountDetails", (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    verifyToken(req, res, ()=> {
+        getClubAccountInfoImplementation(req, res);
+    }); 
  });
 
 /**

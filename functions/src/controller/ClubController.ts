@@ -1,6 +1,6 @@
 import { Response, Request } from 'firebase-functions';
 import  {ClubAccount, Event} from '../domain/ClubAccount';
-import {createClubAccount} from '../repository/ClubRepository';
+import {createClubAccount, getClubAccountInfo} from '../repository/ClubRepository';
 
 /**
  * Create club account from frontends
@@ -25,4 +25,12 @@ export const createClubAccountImplementation = (req : Request, res: Response) =>
         console.log(error);
    });
   }
+}
+
+export const getClubAccountInfoImplementation = (req: Request, res: Response) => {
+  getClubAccountInfo(req.query.uid).then(clubAccountInfo => {
+    res.status(200).send(clubAccountInfo);
+  }).catch(error => {
+    res.status(403).send(error);
+  });
 }

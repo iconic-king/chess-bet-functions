@@ -1,3 +1,6 @@
+import {PuzzleAccount}  from './Puzzle';
+import { UserService } from '../service/AccountService';
+
 export class ClubAccount {
     constructor(public owner: string, public clubId: string | number, public permissions: Array<Permissions>,
         public id: string, public servcieId: number, public status: Status, 
@@ -25,4 +28,10 @@ export enum Status {
     SUSPENDED = 'SUSPENDED',
     CLOSED = 'CLOSED',
     PENDING = 'PENDING',
+}
+
+export class ClubAccoutInfo {
+    public clubAccount: ClubAccount | undefined;
+    public puzzleAccount: PuzzleAccount | undefined;
+    public user: UserService | undefined;
 }
