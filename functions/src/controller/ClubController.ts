@@ -28,7 +28,7 @@ export const createClubAccountImplementation = (req : Request, res: Response) =>
 }
 
 export const getClubAccountInfoImplementation = (req: Request, res: Response) => {
-  getClubAccountInfo(req.query.uid).then(clubAccountInfo => {
+  getClubAccountInfo(req.query.uid, req.query.clubId).then(clubAccountInfo => {
     res.status(200).send(clubAccountInfo);
   }).catch(error => {
     res.status(403).send(error);
