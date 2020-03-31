@@ -10,9 +10,12 @@ export const createClubAccount = (clubAccount: ClubAccount) => {
     return firestoreDatabase.collection('club_accounts').doc(clubAccount.id).set(clubAccount);
 }
 
-export const getClubAccountInfo = async (uid : string) =>{
+export const getClubAccountInfo = async (uid : string, clubId: string) =>{
   const clubAccountInfo = new ClubAccoutInfo();
-  const clubAccount = await firestoreDatabase.collection('club_accounts').where('owner', '==', uid).limit(1).get();
+  const clubAccount = await firestoreDatabase.collection('club_accounts')
+  .where('owner', '==', uid)
+  .where('clubId', '==', clubId)
+  .limit(1).get();
   if (!clubAccount.empty) {
     clubAccountInfo.clubAccount = <ClubAccount> clubAccount.docs[0].data();
   }
