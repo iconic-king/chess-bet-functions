@@ -13,13 +13,13 @@ export const markAssignmentImplementation = (req: Request, res: Response)  => {
 }
 
 async function markAssignment(assignmentResult: AssignmentResult) {
-    let points = 0;
+    let points: number = 0;
     const result = await getAssignmentGroup(assignmentResult);
     const assignmentGroup = <AssignmentGroup> result.data();
     assignmentResult.group = assignmentGroup;
     assignmentResult.questions.forEach(question => {
         if(question.choice === question.answer) {
-            points+= question.points;
+            points = points +  parseInt(question.points.toString());
         }
     });
     assignmentResult.points = points;
