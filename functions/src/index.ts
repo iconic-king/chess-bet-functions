@@ -21,6 +21,7 @@ admin.initializeApp(functions.config().firebase);
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
+import { markAssignmentImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
 import { onRandomChallengeRecieved } from './controller/ChallengeController'
@@ -138,6 +139,16 @@ app.post('/forceEvaluateMatch', (req,res) => {
     }); 
  });
 
+
+ app.post("/assignment/mark", (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set( "Access-Control-Allow-Headers", "Content-Type");
+    verifyToken(req, res, ()=> {
+        markAssignmentImplementation(req, res);
+    });
+ });
+
 /**
  * This function is used to create a matchable account
  */
@@ -146,7 +157,6 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    
     if(req.method === 'POST'){
       verifyToken(req, res, ()=> {
         createMatchabableAccountImplementation(res, req);
