@@ -18,8 +18,14 @@ async function markAssignment(assignmentResult: AssignmentResult) {
     const assignmentGroup = <AssignmentGroup> result.data();
     assignmentResult.group = assignmentGroup;
     assignmentResult.questions.forEach(question => {
-        if(question.choice === question.answer) {
-            points = points +  parseInt(question.points.toString());
+        if (question.hasPuzzle) {
+            if (question.puzzle.solved) {
+                points = points +  parseInt(question.points.toString());
+            }
+        } else  {
+            if(question.choice === question.answer) {
+                points = points +  parseInt(question.points.toString());
+            }
         }
     });
     assignmentResult.points = points;
