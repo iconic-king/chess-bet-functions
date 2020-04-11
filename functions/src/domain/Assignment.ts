@@ -8,6 +8,18 @@ export enum AssignmentType {
     PRODUCT = 'PRODUCT'
 }
 
+export interface PuzzleMove {
+    name: string;
+    toCoordinate: number;
+    fromCoordinate: number;
+}
+
+export interface PuzzleQuestion {
+    fen: string;
+    moves: Array<PuzzleMove>;
+    solved: boolean;
+}
+
 export interface Question {
     no: number;
     type: Type;
@@ -19,6 +31,8 @@ export interface Question {
     answer: string;
     choice: string;
     description: string;
+    hasPuzzle: boolean;
+    puzzle: PuzzleQuestion;
 }
 
 export interface Choice {
