@@ -18,6 +18,7 @@ export interface PuzzleQuestion {
     fen: string;
     moves: Array<PuzzleMove>;
     solved: boolean;
+    readonly isReadOnly: boolean;
 }
 
 export interface Question {
