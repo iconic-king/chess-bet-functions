@@ -41,7 +41,7 @@ export const getTournamentParingsImplementation = async (req : Request, res: Res
  * @param req 
  * @param res 
  */
-export const createTournament = async (req : Request, res: Response) => {
+export const createTournamentImplementation = async (req : Request, res: Response) => {
     try  {
         const tournament = <Tournament> req.body;
         if (tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
@@ -62,3 +62,8 @@ export const createTournament = async (req : Request, res: Response) => {
         res.status(403).send(error)
     }
 }
+
+export const addPlayersToTournamentImplementation = async (req : Request, res: Response) => {
+    res.status(200).send(req.query.id);
+}
+

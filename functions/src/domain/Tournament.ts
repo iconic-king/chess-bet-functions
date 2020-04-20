@@ -21,6 +21,7 @@ export class Tournament {
     public deputyArbiter!: string;
     public allottedTimes!: string;
     public rounds!: string;
+    public isLocked = false;
 }
 
 /**
@@ -58,5 +59,5 @@ export class SwissTeam {
 
 export class SwissTournament extends Tournament {
     public teams: Array<SwissTeam> = new Array();
-    public players: Array<SwissTeam> = new Array();
+    public players: Array<PlayerSection> = new Array();
 }
