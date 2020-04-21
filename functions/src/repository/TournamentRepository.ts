@@ -17,6 +17,7 @@ const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDurat
     if(player.uid && player.email) {
        const matchableAccount = new MatchablePlayOnlineTournamentAccount(player.uid, true, false, 0, MatchType.PLAY_ONLINE, false, tournamentDuration)
        matchableAccount.email = player.email;
+       matchableAccount.duration = tournamentDuration;
        matchableAccount.timeStamp = new Date().getTime();
        return matchableAccount;
     }
@@ -25,20 +26,25 @@ const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDurat
    
 
 export const createMatchAbleAccountsForPlayers = async (players: Array<PlayerSection>, duration: number) => {
-    const map = new Map<string, MatchablePlayOnlineTournamentAccount>();
-    if(!players) {
-        return null;
-    }
-    for (const player of players) {
-        const matchable = createMatchableAccountFromPlayer(player, duration);
-        if(player.uid && matchable){
-            map.set(`/matchables/${player.uid}`, matchable);
-        } else {
+    const map =  {};
+    try {
+        if(!players) {
             return null;
         }
+        for (const player of players) {
+            const matchable = createMatchableAccountFromPlayer(player, duration);
+            if(player.uid && matchable){
+                map[player.uid]  = matchable;
+            } else {
+                return null;
+            }
+        }
+        // Matchables created successfully
+        console.log(map);
+        await realtimeDB.ref().child('matchables').set(map);
+    } catch(error) {
+        console.error(error);
     }
-    // Matchables created successfully
-    await realtimeDB.ref().set(map);
     return map;
 }
 
@@ -46,6 +52,7 @@ export const  createSwissTournament = async (tournament :SwissTournament) => {
     tournament.id = firestoreDatabase.collection(tournamentCollection).doc().id
     tournament.timeStamp = new Date().getTime();
     tournament.dateOfStart = new Date().toLocaleDateString();
+    tournament.matchDuration = (tournament.matchDuration) ? tournament.matchDuration : 5;
     let index = 1;
     for(const player of tournament.players) {
         player.tournamentId = tournament.id
@@ -113,7 +120,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
 }
 // Invoked During Tournament Creation
 export const createMatchableAccountsFromTournament = async (tournament: Tournament) => {
-    let map = new Map<string, MatchablePlayOnlineTournamentAccount>();
+    let map = {}
     if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
         const swissTournament = <SwissTournament>  tournament;
         const accountsMap = await createMatchAbleAccountsForPlayers(swissTournament.players, swissTournament.matchDuration);
