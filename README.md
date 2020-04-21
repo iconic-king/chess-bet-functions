@@ -41,3 +41,17 @@ npm install --save firebase-functions@latest
 firebase deploy --only firestore:rules
 firebase deploy --only database:rules
 ```
+
+
+### Running Functions Locally With ENV Variabled
+```
+cd functions
+```
+- Imports vars deployed to cloud functions
+```
+firebase functions:config:get > .runtimeconfig.json
+```
+- Starts Cloud Functions
+```
+firebase functions:shell
+```

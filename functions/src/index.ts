@@ -32,6 +32,7 @@ import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation } from './controller/TournamentController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -200,7 +201,33 @@ app.post('/evaluateMatch',(req, res) =>{
     }
 });
 
-// ----------------------------- MATCH SERVICE END ----------------------------------------------
+// ----------------------------- MATCH SERVICE END -----------------------------------------------------
+
+
+// ----------------------------- TOURNAMENT SERVICE START ------------------------------------------------
+
+app.post('/tournament/validate',(req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    validateTournamentImplementation(req, res);
+});
+
+app.post('/tournament/pair',(req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getTournamentParingsImplementation(req, res);
+});
+
+
+app.post('/tournament/createTournament', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    createTournamentImplementation(req, res);
+});
+
+app.post('/tournament/addPlayers', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    addPlayersToTournamentImplementation(req, res);
+});
+
+// ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
 
 // ----------------------------- STORAGE FUNCTIONS START  ----------------------------------------------
 export const resizeProfilePhotos = functions.storage.object().onFinalize(event => {

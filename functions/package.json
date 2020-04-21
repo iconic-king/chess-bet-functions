@@ -10,7 +10,7 @@
     "logs": "firebase functions:log",
     "test": "jest --verbose=false --detectOpenHandles",
     "ccjest": "jest --clearCache",
-    "deploy-rules" : "firebase deploy --only firestore:rules"
+    "deploy-rules": "firebase deploy --only firestore:rules"
   },
   "engines": {
     "node": "8"
@@ -27,6 +27,7 @@
     "firebase-functions": "^3.3.0",
     "firebase-queue": "^1.6.1",
     "firesql": "^2.0.2",
+    "request": "^2.88.2",
     "sinon": "^8.1.0"
   },
   "devDependencies": {
