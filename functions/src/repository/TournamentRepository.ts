@@ -18,6 +18,7 @@ const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDurat
        const matchableAccount = new MatchablePlayOnlineTournamentAccount(player.uid, true, false, 0, MatchType.PLAY_ONLINE, false, tournamentDuration)
        matchableAccount.email = player.email;
        matchableAccount.duration = tournamentDuration;
+       matchableAccount.tournamentId = player.tournamentId;
        matchableAccount.timeStamp = new Date().getTime();
        return matchableAccount;
     }
@@ -96,6 +97,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                         if(swissTournament.players.filter(result => result.uid === player.uid).length === 0) {
                             if(player.uid && player.email) {
                                 player.rankNumber = counter;
+                                player.tournamentId = swissTournament.id;
                                 swissTournament.players.push(player);
                                 counter++;
                             } else {
