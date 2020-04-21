@@ -1,4 +1,5 @@
 import { SwissTournament } from "../domain/Tournament";
+import { SwissParingOutput } from "../domain/ParingOutput";
 
 const functions = require('firebase-functions');
 const request = require('request');
@@ -32,7 +33,7 @@ export class TPSApi {
                     console.error(error);
                     reject({err: error});
                 } else {
-                    resolve(response.body)
+                    resolve(<Array<SwissParingOutput>> response.body);
                 }
             })
         });

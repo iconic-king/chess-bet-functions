@@ -6,6 +6,8 @@
 import { ParingAlgorithm } from "./ParingAlgorithm";
 
 export class Tournament {
+    public matchDuration: number = 5; // Default tournament match duration
+    public timeStamp: number | undefined;
     public authorUid: string | undefined;
     public id: string | undefined;
     public name!: string;
@@ -28,6 +30,8 @@ export class Tournament {
  * Follows FIDE swiss specification
  */
 export class PlayerSection {
+    public tournamentId: undefined | string;
+    public email: string| undefined;
     public accountId: string | undefined;
     public uid: string | undefined;
     public id: string | undefined = "001";

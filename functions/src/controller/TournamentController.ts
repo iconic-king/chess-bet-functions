@@ -1,8 +1,8 @@
 import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
-import { SwissTournament, Tournament } from '../domain/Tournament';
+import { SwissTournament, Tournament, PlayerSection } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament } from '../repository/TournamentRepository';
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -44,14 +44,17 @@ export const getTournamentParingsImplementation = async (req : Request, res: Res
 export const createTournamentImplementation = async (req : Request, res: Response) => {
     try  {
         const tournament = <Tournament> req.body;
+        // Create Swiss Tournament
         if (tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
             if(tournament.authorUid) {
-                await createSwissTournament(<SwissTournament> req.body);
-                res.status(200).send(tournament);
+                const result =  await createSwissTournament(<SwissTournament> req.body);
+                if(result) {
+                    res.status(200).send(tournament);
+                } else {
+                    res.status(403).send({err: `Tournament Has Invalid Format`});
+                }
             } else {
-                res.status(403).send({
-                    err: `Tournament Has No Author`
-                }) 
+                res.status(403).send({err: `Tournament Has No Author`});
             }
         } else {
             res.status(403).send({
@@ -59,11 +62,22 @@ export const createTournamentImplementation = async (req : Request, res: Respons
             }) 
         }
     } catch(error) {
-        res.status(403).send(error)
+        res.status(403).send({err: error});
     }
 }
 
 export const addPlayersToTournamentImplementation = async (req : Request, res: Response) => {
-    res.status(200).send(req.query.id);
+    const players =  <Array<PlayerSection>> req.body;
+    console.log(players[0]);
+    try {
+        const transaction = await addPlayersToTournament(req.query.tournamentId, players);
+        if(transaction) {
+            res.status(200).send(transaction);  
+        } else {
+            res.status(403).send({err : "Request Forbidden"})
+        }
+    } catch(error) {
+        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+    }
 }
 
