@@ -2,11 +2,13 @@
  * @autjor Collins Magondu 04/20/2020
  */
 import * as admin from 'firebase-admin';
-import { SwissTournament, PlayerSection, Tournament } from '../domain/Tournament';
+import { SwissTournament, PlayerSection, Tournament, Round } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { ParingOutput } from '../domain/ParingOutput';
-import { MatchablePlayOnlineTournamentAccount } from '../service/AccountService';
+import { MatchablePlayOnlineTournamentAccount, MatchedPlayOnlineAccount, MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
+import { ParingOutput, Pair } from '../domain/ParingOutput';
+import { createMatchedPlayTournamentAccount, createMatch } from './MatchRepository';
+import { Alliance } from '../domain/Alliance';
 
 const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
@@ -133,6 +135,90 @@ export const createMatchableAccountsFromTournament = async (tournament: Tourname
     return map;
 }
 
-export const matchSwissTournamentPairs = (paringOutPut: ParingOutput): Tournament | null => {
+// Gets tournament Id
+export const getTournamentByID = async (id: string) => {
+    const snapshot = await firestoreDatabase.collection(tournamentCollection).doc(id).get();
+    const tournament = (snapshot.exists) ? <Tournament> snapshot.data() : null;
+    if(tournament){
+        switch (tournament.paringAlgorithm) {
+            case ParingAlgorithm.SWISS:
+                return <SwissTournament> snapshot.data();
+        }
+    }
+
     return null;
+}
+
+// Updates Whole Tournament Id
+export const updateTournament = async (tournament: Tournament) => {
+    if(tournament.id) {
+        await firestoreDatabase.collection(tournamentCollection).doc(tournament.id).set(tournament);
+        return tournament;
+    }
+    return null;
+}
+
+function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTournament, matchId: string): Array<MatchedPlayOnlineAccount>{
+    const accounts = new Array<MatchedPlayOnlineTournamentAccount>();
+    if(pair.whitePlayer && pair.blackPlayer) {
+        const white = createMatchedPlayTournamentAccount(tournament.players[pair.whitePlayer - 1],
+            tournament.players[pair.blackPlayer - 1], matchId, tournament.matchDuration, Alliance.WHITE, tournament);
+        const black = createMatchedPlayTournamentAccount(tournament.players[pair.blackPlayer - 1],
+            tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);
+        if(white && black) {
+            accounts.push(white, black);
+        }
+    }
+    return accounts;
+}
+
+export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: SwissTournament) => {
+    let isMatchMade = false;
+    const map = {
+        matchables: {},
+        matches: {}
+    }
+    console.log(`${tournament.id}  has ${paringOutput.pairs} for round ${tournament.numbeOfRoundsScheduled}`);
+    for(const pair of paringOutput.pairs) {
+        /// We have an odd number of players
+        if(pair.blackPlayer === 0 && pair.whitePlayer) {
+            const round = new Round();
+            round.playerNumber = '0000'
+            round.scheduledColor = Alliance.NOALLIANCE
+            round.result = 'Z' //Known Absence From Round
+            tournament.players[pair.whitePlayer].rounds.push(round);
+        } else if (pair.blackPlayer && pair.whitePlayer) {
+            try {
+                const blackPlayerIndex = pair.blackPlayer - 1;
+                const whitePlayerIndex = pair.whitePlayer - 1;
+                const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
+                const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
+                map.matches[matchId] = match;
+                const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
+                if(accounts.length  !== 2) {
+                    throw new Error("Accounts Must Be Two");
+                }
+                for(const account of accounts) {
+                     map.matchables[account.owner] = account;
+                }
+                isMatchMade = true;
+                tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
+
+            }catch (error) {
+                console.error(error);
+            }
+
+        }
+    }
+    if(isMatchMade) {
+        console.log(map);
+        return map;
+    } else {
+        throw new Error("Map Has Not Been Found");
+    }
+}
+
+export const updateObject = async (object: any) => {
+    await realtimeDB.ref().update(object);
+    return object;
 }

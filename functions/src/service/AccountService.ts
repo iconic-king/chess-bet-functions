@@ -146,7 +146,7 @@ export class MatchedPlayOnlineTournamentAccount extends MatchedPlayOnlineAccount
     public result: string | undefined;
     public sidePlayed: string  | undefined;
     public isForTournament = true
-    public timeStamp = true;
+    public timeStamp: number | undefined;
     public createdByUID : string | undefined;
     public tournamentId: string  | undefined;
     public email: string | undefined; // Used for notification of a match 

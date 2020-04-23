@@ -16,6 +16,7 @@ export class TPSApi {
                     console.error(error);
                     reject({err: error});
                 } else {
+                    console.log(response.body); 
                     resolve(response.body)
                 }
             })

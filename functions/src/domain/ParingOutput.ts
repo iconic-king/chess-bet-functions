@@ -1,8 +1,8 @@
 import { Tournament } from "./Tournament";
 
 export class Pair {
-    public whitePlayer :number | undefined;
-    public blackPlayer :number | undefined;
+    public whitePlayer!: number;
+    public blackPlayer!: number;
 }
 
 export class ParingOutput {

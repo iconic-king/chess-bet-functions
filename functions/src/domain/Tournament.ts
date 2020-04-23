@@ -23,7 +23,7 @@ export class Tournament {
     public deputyArbiter!: string;
     public allottedTimes!: string;
     public numbeOfRoundsScheduled!: number;
-    public rounds!: string;
+    public rounds!: number;
     public isLocked = false;
 }
 
@@ -34,7 +34,7 @@ export class PlayerSection {
     public tournamentId: undefined | string;
     public email: string| undefined;
     public accountId: string | undefined;
-    public uid: string | undefined;
+    public uid!: string;
     public id: string | undefined = "001";
     public rankNumber: number | undefined = 0;
     public sex: string | undefined;
@@ -57,7 +57,7 @@ export class PlayerSection {
 }
 
 export class Round {
-    public playerNumber: string | undefined;
+    public playerNumber!: string;
     public scheduledColor: string | undefined;
     public result: string | undefined;
 }
