@@ -131,7 +131,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
             account_two = <AccountService> snapshot2.docs[0].data();
             exchangePoints(account_one, account_two, matchResult);
             getMatch(matchResult.matchId).then((snapshot3)=>{
-                if(snapshot3.exists){
+                if(snapshot3.exists()){
                 const match = <MatchService>snapshot3.val();
                 const match_details: MatchDetailsService = {
                     match_result : matchResult,
@@ -199,7 +199,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
 export const forceEvaluateMatch = (req,res) => {
     const matchId = req.body;
     getMatch(matchId).then(snapshot => {
-        if(snapshot.exists){
+        if(snapshot.exists()){
         const match = <MatchService> snapshot.val();
         const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
         ? match.players.WHITE.owner : match.players.BLACK.owner; 

@@ -1,6 +1,8 @@
 import * as admin from 'firebase-admin';
-import { MatchableAccount, MatchablePlayOnlineAccount, MatchService} from '../service/AccountService';
+import { MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchedPlayOnlineTournamentAccount} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
+import { PlayerSection, SwissTournament } from '../domain/Tournament';
+import { Alliance } from '../domain/Alliance';
 
 const realtimeDatabase = admin.database();
 
@@ -107,4 +109,47 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
 
 export const getMatch = (match_id:string) => {
    return matchesReference.child(match_id).once('value');
+}
+
+export const createMatchedPlayTournamentAccount = (player: PlayerSection, opponent: PlayerSection, matchId: string, 
+  duration: number, alliance: Alliance, tournament: SwissTournament): MatchedPlayOnlineTournamentAccount | null => {
+    if(opponent.name && player.uid && opponent.uid) {
+      const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE, true, opponent.name, matchId, duration, opponent.uid);
+      account.email = player.email;
+      account.owner = player.uid;
+      account.result = '0'
+      account.sidePlayed = alliance;
+      account.tournamentId = tournament.id;
+      account.timeStamp = new Date().getTime();
+      account.oppenentRank = opponent.rankNumber;
+      account.currentRound = (tournament.numbeOfRoundsScheduled) ?  tournament.numbeOfRoundsScheduled + 1 : 1;
+      return account;
+    }
+    return null;
+}
+
+export const createMatch = (black:string, white:string , match_type:MatchType)=> {
+  const match: MatchService = {
+    match_type : match_type,
+    players : {
+      BLACK : {
+         owner :black,
+         from : 0,
+         to: 0,
+         pgn: '',
+         gameTimeLeft: 0,
+         events : []
+      },
+      WHITE :{
+        owner :white ,
+        from : 0, 
+        to: 0,
+        pgn: '',
+        gameTimeLeft: 0,
+        events : []
+      }
+    },
+    scheduleEvaluation: false
+  }
+  return match;
 }

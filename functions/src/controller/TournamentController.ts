@@ -1,8 +1,10 @@
 import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
-import { SwissTournament, Tournament, PlayerSection } from '../domain/Tournament';
+import { SwissTournament, Tournament, PlayerSection, Round } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament, addPlayersToTournament } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament } from '../repository/TournamentRepository';
+import { ParingOutput } from '../domain/ParingOutput';
+import { Alliance } from '../domain/Alliance';
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -59,7 +61,7 @@ export const createTournamentImplementation = async (req : Request, res: Respons
         } else {
             res.status(403).send({
                 err: `No Tournament Of Type ${tournament.paringAlgorithm}`
-            }) 
+        }) 
         }
     } catch(error) {
         res.status(403).send({err: error});
@@ -76,6 +78,57 @@ export const addPlayersToTournamentImplementation = async (req : Request, res: R
         } else {
             res.status(403).send({err : "Request Forbidden"})
         }
+    } catch(error) {
+        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+    }
+}
+
+export const scheduleTournamentMatchesImplementation = async (req : Request, res: Response) => {
+    try {
+        if(req.query.tournamentId) {
+            const tournament = await getTournamentByID(req.query.tournamentId);
+            // Change logic is more than one tournament type is possible
+            if(tournament){
+                // If played rounds are equivalent to the rounds to be played do not proceed
+                if (tournament.numbeOfRoundsScheduled === tournament.rounds) {
+                    res.status(200).send(tournament);
+                    return;
+                }
+
+                for(const player of tournament.players) {
+                    if(player.isActive === undefined) {
+                        player.isActive = true;
+                    } 
+                    if(!player.isActive) {
+                        const round = new Round();
+                        round.playerNumber = '0000'
+                        round.scheduledColor = Alliance.NOALLIANCE
+                        round.result = 'U' //unpaired by the system
+                        player.rounds.push(round);
+                    }
+                }
+                // Get Parings From Next User
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);
+                if(paringOutput.pairs) {
+                    const map = matchOnSwissParings(paringOutput, tournament);
+                    // Validate the tournament state after parings have been added
+                    const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                    if(response.name) {
+                        // Valid Response
+                        const swissTournament = await updateTournament(tournament);
+                        const object = await updateObject(map);
+                        if(swissTournament) {
+                            res.status(200).send({
+                                tournament: swissTournament,
+                                updates: object
+                            });
+                            return;
+                        }
+                    }
+                }    
+            }
+        }
+        res.status(403).send({err : "Tournamnet Is Invalid"});
     } catch(error) {
         res.status(403).send({err : (error) ? error : "Request Forbidden"})
     }

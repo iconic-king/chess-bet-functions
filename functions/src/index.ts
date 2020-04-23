@@ -32,7 +32,7 @@ import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
-import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation } from './controller/TournamentController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation } from './controller/TournamentController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -226,6 +226,12 @@ app.post('/tournament/addPlayers', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     addPlayersToTournamentImplementation(req, res);
 });
+
+app.post('/tournament/schedule', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    scheduleTournamentMatchesImplementation(req, res);
+});
+
 
 // ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
 
