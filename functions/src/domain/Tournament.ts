@@ -22,6 +22,7 @@ export class Tournament {
     public chiefArbiter!: string;
     public deputyArbiter!: string;
     public allottedTimes!: string;
+    public numbeOfRoundsScheduled!: number;
     public rounds!: string;
     public isLocked = false;
 }
@@ -45,7 +46,14 @@ export class PlayerSection {
     public birthDate: string | undefined;
     public points: number = 0;
     public rank: number = 0;
+    public isActive: boolean  = true; // Set false when user is removed from tournament
     public rounds: Array<Round> = new Array();
+
+    addRound(round: Round) {
+        if(round) {
+            this.rounds.push(round);
+        }
+    }
 }
 
 export class Round {
