@@ -107,12 +107,8 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         player.rounds.push(round);
                     }
                 }
-                
-                console.log(tournament);
                 // Get Parings From Next User
                 const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);
-                console.log(paringOutput);
-
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added

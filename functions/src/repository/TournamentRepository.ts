@@ -211,7 +211,6 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
         }
     }
     if(isMatchMade) {
-        console.log(map);
         return map;
     } else {
         throw new Error("Map Has Not Been Found");
