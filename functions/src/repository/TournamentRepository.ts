@@ -223,9 +223,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
 }
 
 export const updateObject = async (object: any) => {
-    await realtimeDB.ref().update(object).catch(error => {
-        console.log(error);
-    });
+    await realtimeDB.ref().update(object);
     return object;
 }
 
