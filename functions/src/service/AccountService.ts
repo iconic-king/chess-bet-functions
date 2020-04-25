@@ -1,5 +1,6 @@
 import { MatchType } from "../domain/MatchType";
 import { MatchResult } from "./MatchService";
+import { Alliance } from "../domain/Alliance";
 
 export interface UserService{
     email: string | undefined,
@@ -141,10 +142,10 @@ export class MatchablePlayOnlineTournamentAccount extends MatchablePlayOnlineAcc
 
 // Based on swiss
 export class MatchedPlayOnlineTournamentAccount extends MatchedPlayOnlineAccount {
-    public currentRound: number | undefined;
-    public oppenentRank: number | undefined;
-    public result: string | undefined;
-    public sidePlayed: string  | undefined;
+    public currentRound!: number;
+    public oppenentRank!: number;
+    public result!: string;
+    public sidePlayed!: Alliance;
     public isForTournament = true
     public timeStamp: number | undefined;
     public createdByUID : string | undefined;

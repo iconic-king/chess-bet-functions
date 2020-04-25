@@ -36,7 +36,7 @@ export class PlayerSection {
     public accountId: string | undefined;
     public uid!: string;
     public id: string | undefined = "001";
-    public rankNumber: number | undefined = 0;
+    public rankNumber: number = 0;
     public sex: string | undefined;
     public title: string | undefined;
     public name: string | undefined;
@@ -56,12 +56,21 @@ export class PlayerSection {
     }
 }
 
-export class Round {
-    public playerNumber!: string;
-    public scheduledColor: string | undefined;
-    public result: string | undefined;
+export interface Round {
+    playerNumber: string;
+    scheduledColor: string | undefined;
+    result: string;
+    matchUrl: string | undefined;
 }
 
+export function CreateRoundFactory(playerNumber: string, scheduledColor: string, result: string, matchUrl) :Round {
+    return {
+        result : result,
+        scheduledColor: scheduledColor,
+        playerNumber: playerNumber,
+        matchUrl: matchUrl
+    }
+}
 
 export class SwissTeam {
     public id: string = "013";

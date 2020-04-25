@@ -32,7 +32,7 @@ import { MatchResult } from './service/MatchService';
 import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
-import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation } from './controller/TournamentController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation } from './controller/TournamentController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -71,6 +71,7 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
+            // tslint:disable-next-line: deprecation
             forceEvaluateMatch(req, res);
         });
     } else{
@@ -230,6 +231,11 @@ app.post('/tournament/addPlayers', (req, res) =>  {
 app.post('/tournament/schedule', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     scheduleTournamentMatchesImplementation(req, res);
+});
+
+app.post('/tournament/evaluateTounamentMatch', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    evaluateTournamentMatchImplementation(req, res);
 });
 
 
