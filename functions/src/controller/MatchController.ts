@@ -2,7 +2,7 @@
  * @author Collins Magondu
  */
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
+import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount, MatchedPlayOnlineTournamentAccount} from '../service/AccountService';
 
 import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
@@ -195,7 +195,19 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
     });
 }
 
+// export const evaluateTournamentMatchResult = async (gain: MatchedPlayOnlineTournamentAccount, loss: MatchedPlayOnlineTournamentAccount, result: MatchResult) => {
+//   const gainUserAccountSnapshot = await getUserAccount(gain.owner).get();
+//   const lossUserAccountSnapshot = await getUserAccount(loss.owner).get();
 
+// //   if()
+// }
+
+
+/**
+ * @deprecated
+ * @param req 
+ * @param res 
+ */
 export const forceEvaluateMatch = (req,res) => {
     const matchId = req.body;
     getMatch(matchId).then(snapshot => {

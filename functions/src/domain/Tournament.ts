@@ -56,10 +56,10 @@ export class PlayerSection {
     }
 }
 
-export class Round {
-    public playerNumber!: string;
-    public scheduledColor: string | undefined;
-    public result: string | undefined;
+export interface Round {
+    playerNumber: string;
+    scheduledColor: string | undefined;
+    result: string | undefined;
 }
 
 

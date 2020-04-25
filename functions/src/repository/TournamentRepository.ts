@@ -152,7 +152,11 @@ export const getTournamentByID = async (id: string) => {
 // Updates Whole Tournament Id
 export const updateTournament = async (tournament: Tournament) => {
     if(tournament.id) {
-        await firestoreDatabase.collection(tournamentCollection).doc(tournament.id).set(tournament);
+        try {
+            await firestoreDatabase.collection(tournamentCollection).doc(tournament.id).set(tournament);
+        } catch(error) {
+            console.log(error);
+        }
         return tournament;
     }
     return null;
@@ -180,34 +184,34 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
     }
     console.log(`${tournament.id}  has ${paringOutput.pairs} for round ${tournament.numbeOfRoundsScheduled}`);
     for(const pair of paringOutput.pairs) {
+        try {
         /// We have an odd number of players
+        console.log(pair);
         if(pair.blackPlayer === 0 && pair.whitePlayer) {
-            const round = new Round();
-            round.playerNumber = '0000'
-            round.scheduledColor = Alliance.NOALLIANCE
-            round.result = 'Z' //Known Absence From Round
-            tournament.players[pair.whitePlayer].rounds.push(round);
-        } else if (pair.blackPlayer && pair.whitePlayer) {
-            try {
-                const blackPlayerIndex = pair.blackPlayer - 1;
-                const whitePlayerIndex = pair.whitePlayer - 1;
-                const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
-                const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
-                map.matches[matchId] = match;
-                const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
-                if(accounts.length  !== 2) {
-                    throw new Error("Accounts Must Be Two");
-                }
-                for(const account of accounts) {
-                     map.matchables[account.owner] = account;
-                }
-                isMatchMade = true;
-                tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
-
-            }catch (error) {
-                console.error(error);
+            const round:  Round = {
+                playerNumber : '0000',
+                scheduledColor: Alliance.NOALLIANCE,
+                result: 'Z'
             }
-
+            tournament.players[pair.whitePlayer - 1].rounds.push(round);
+        } else if (pair.blackPlayer && pair.whitePlayer) {
+            const blackPlayerIndex = pair.blackPlayer - 1;
+            const whitePlayerIndex = pair.whitePlayer - 1;
+            const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
+            const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
+            map.matches[matchId] = match;
+            const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
+            if(accounts.length  !== 2) {
+                throw new Error("Accounts Must Be Two");
+            }
+            for(const account of accounts) {
+                    map.matchables[account.owner] = account;
+            }
+            isMatchMade = true;
+            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
     if(isMatchMade) {
@@ -218,6 +222,9 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
 }
 
 export const updateObject = async (object: any) => {
-    await realtimeDB.ref().update(object);
+    console.log("Section 3");
+    await realtimeDB.ref().update(object).catch(error => {
+        console.log(error);
+    });
     return object;
 }

@@ -5,6 +5,9 @@ import { ParingAlgorithm } from '../domain/ParingAlgorithm';
 import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
+import { MatchResult } from '../service/MatchService';
+import { getMatchableAccount } from '../repository/MatchRepository';
+import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -18,7 +21,7 @@ export const validateTournamentImplementation = async (req : Request, res: Respo
             }) 
         }
     } catch(error) {
-        res.status(403).send(error)
+        res.status(403).send(error);
     }
 }
 
@@ -100,10 +103,11 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         player.isActive = true;
                     } 
                     if(!player.isActive) {
-                        const round = new Round();
-                        round.playerNumber = '0000'
-                        round.scheduledColor = Alliance.NOALLIANCE
-                        round.result = 'U' //unpaired by the system
+                        const round:  Round = {
+                            playerNumber : '0000',
+                            scheduledColor: Alliance.NOALLIANCE,
+                            result: 'U' //unpaired by the system
+                        }
                         player.rounds.push(round);
                     }
                 }
@@ -132,5 +136,25 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
     } catch(error) {
         res.status(403).send({err : (error) ? error : "Request Forbidden"})
     }
+}
+
+
+export const evaluateTournamentMatch = async (req: Request, res: Response) => {
+    const matchResult = <MatchResult> req.body();
+    const tournamentId = req.query.tournamentId;
+    if(matchResult && tournamentId) {
+        const gainAccountSnapshot = await getMatchableAccount(matchResult.gain);
+        const lossAccountSnapshot = await getMatchableAccount(matchResult.loss);
+        const tournament = await getTournamentByID(tournamentId);
+        
+        if(tournament && lossAccountSnapshot.exists() && gainAccountSnapshot.exists()) {
+            const gainAccount = <MatchedPlayOnlineTournamentAccount> gainAccountSnapshot.val();
+            const lossAccount = <MatchedPlayOnlineTournamentAccount> lossAccountSnapshot.val();
+            if(gainAccount.isForTournament && lossAccount.isForTournament) {
+                 
+            }
+        }
+    }
+    res.status(403).send({err: "Invalid Request"});
 }
 
