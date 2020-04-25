@@ -5,9 +5,10 @@ import { ParingAlgorithm } from '../domain/ParingAlgorithm';
 import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
-import { MatchResult, MatchStatus } from '../service/MatchService';
+import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
 import { getMatchableAccount } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
+import { StorageApi } from '../api/StorageApi';
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -106,7 +107,9 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         const round:  Round = {
                             playerNumber : '0000',
                             scheduledColor: Alliance.NOALLIANCE,
-                            result: 'U' //unpaired by the system
+                            result: 'U', //unpaired by the system,
+                            matchUrl: undefined
+                
                         }
                         player.rounds.push(round);
                     }
@@ -139,8 +142,8 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
 }
 
 
-export const evaluateTournamentMatch = async (req: Request, res: Response) => {
-    const matchResult = <MatchResult> req.body();
+export const evaluateTournamentMatchImplementation = async (req: Request, res: Response) => {
+    const matchResult = <MatchResult> req.body;
     const tournamentId = req.query.tournamentId;
     try  {
         if(matchResult && tournamentId) {
@@ -153,22 +156,28 @@ export const evaluateTournamentMatch = async (req: Request, res: Response) => {
                 if(gainAccount.isForTournament && lossAccount.isForTournament) {
                     let gainRound: Round;
                     let lossRound:Round;
+                    const white = gainAccount.sidePlayed === Alliance.WHITE ? lossAccount.opponent : gainAccount.opponent;
+                    const black = gainAccount.sidePlayed === Alliance.BLACK ? lossAccount.opponent : gainAccount.opponent;
+                    const match = await StorageApi.storeGamePGN(white, black, "Chess MVP Tournament", matchResult, getResult(matchResult, gainAccount.sidePlayed));
                     if(matchResult.matchStatus === MatchStatus.DRAW) {
-                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '=');
-                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '=');     
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '=', match);
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '=', match);     
                     } else if (matchResult.matchStatus === MatchStatus.ABANDONMENT) { // In the event of a forfeit
-                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '+');
-                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '-');
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '+', match);
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '-', match);
                     } else {
-                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '1');
-                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '0');
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '1', match);
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '0', match);
                     }
                     tournament = await updatePlayerRounds(tournamentId, lossAccount.oppenentRank, gainRound, gainAccount.oppenentRank, lossRound);
                     if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
                         tournament = <SwissTournament> tournament;
-                        tournament = await TPSApi.validateSwissTournament(tournament);
+                        tournament = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                        if(tournament.name) {
+                            res.status(200).send(tournament);
+                            return;
+                        }
                     }
-                    res.status(200).send(tournament);
                 }
             }
         }

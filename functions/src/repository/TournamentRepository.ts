@@ -191,7 +191,8 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             const round:  Round = {
                 playerNumber : '0000',
                 scheduledColor: Alliance.NOALLIANCE,
-                result: 'Z'
+                result: 'Z',
+                matchUrl: undefined
             }
             tournament.players[pair.whitePlayer - 1].rounds.push(round);
         } else if (pair.blackPlayer && pair.whitePlayer) {
@@ -246,7 +247,7 @@ function updatePlayerRound(player: PlayerSection, round: Round){
  * @param roundTwo 
  */
 export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, roundOne: Round, playerRankTwo: number, roundTwo: Round) => {
-    const ref = firestoreDatabase.collection("tournament").doc(tournamentId);
+    const ref = firestoreDatabase.collection(tournamentCollection).doc(tournamentId);
     return firestoreDatabase.runTransaction(async transaction => {
         const doc = await transaction.get(ref);
         if (doc.exists) {
@@ -267,10 +268,11 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
                     updatePlayerRound(playerTwo, roundTwo);
                     isUpdated = true;
                 }
+                
                 // Should Be Updated
                 if(isUpdated) {
-                    transaction.update(ref, tournament);
-                    return (tournament.paringAlgorithm === ParingAlgorithm.SWISS) ? <SwissTournament>  doc.data() : tournament;
+                    transaction.update(ref, swiss);
+                    return swiss;
                 }
             }
         }

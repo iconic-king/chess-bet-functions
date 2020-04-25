@@ -33,6 +33,7 @@
   "devDependencies": {
     "@types/jest": "^24.9.0",
     "@types/node": "^13.1.8",
+    "@types/uuid": "^7.0.3",
     "firebase-functions-test": "^0.1.7",
     "jest": "^24.9.0",
     "ts-jest": "^24.3.0",
