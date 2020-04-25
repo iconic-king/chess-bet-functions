@@ -222,9 +222,58 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
 }
 
 export const updateObject = async (object: any) => {
-    console.log("Section 3");
     await realtimeDB.ref().update(object).catch(error => {
         console.log(error);
     });
     return object;
+}
+
+function updatePlayerRound(player: PlayerSection, round: Round){
+    if(round.result === 'W' || round.result === '1' || round.result === '+') {
+        player.points = (player.points) ? player.points + 1 :  1;
+    } else if  (round.result === 'D' || round.result === '=') {
+        player.points = (player.points) ? player.points + 0.5 :  0.5;
+    }
+    player.rounds.push(round);
+} 
+
+/**
+ * Runs Transaction to updated player rounds
+ * @param tournamentId 
+ * @param playerRankOne 
+ * @param roundOne 
+ * @param playerRankTwo 
+ * @param roundTwo 
+ */
+export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, roundOne: Round, playerRankTwo: number, roundTwo: Round) => {
+    const ref = firestoreDatabase.collection("tournament").doc(tournamentId);
+    return firestoreDatabase.runTransaction(async transaction => {
+        const doc = await transaction.get(ref);
+        if (doc.exists) {
+            const tournament = <Tournament> doc.data();
+            if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
+                let isUpdated  = false;
+                const swiss = <SwissTournament> doc.data();
+                const playerOne = swiss.players[playerRankOne - 1];
+                // Rounds Are Not Updated Yet
+                if(playerOne.rounds.length < tournament.numbeOfRoundsScheduled) {
+                    updatePlayerRound(playerOne, roundOne);
+                    isUpdated = true;
+                }
+                isUpdated = false;
+                const playerTwo = swiss.players[playerRankTwo - 1];
+                // Rounds Are Not Updated Yet
+                if(playerTwo.rounds.length < tournament.numbeOfRoundsScheduled) {
+                    updatePlayerRound(playerTwo, roundTwo);
+                    isUpdated = true;
+                }
+                // Should Be Updated
+                if(isUpdated) {
+                    transaction.update(ref, tournament);
+                    return (tournament.paringAlgorithm === ParingAlgorithm.SWISS) ? <SwissTournament>  doc.data() : tournament;
+                }
+            }
+        }
+        throw new Error(`Tounament ${tournamentId} No Update Took Place`);
+    });
 }

@@ -2,11 +2,11 @@
  * @author Collins Magondu
  */
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount, MatchedPlayOnlineTournamentAccount} from '../service/AccountService';
+import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
 import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
-import { MatchResult } from '../service/MatchService';
+import { MatchResult, MatchStatus } from '../service/MatchService';
 import { MatchTask, addTaskToQueue } from './MatchQueue';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
 
@@ -78,13 +78,12 @@ function newRating (expected_score: number, score: number, rating: number){
 }
 
 function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : number {
-    if(account.owner === matchResult.gain) {
-        // Won
-        account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 1.0, account.elo_rating);
-    }
-    else if (matchResult.matchStatus === 'DRAW') {
+    if (matchResult.matchStatus === MatchStatus.DRAW) {
         // Draw
         account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 0.5 , account.elo_rating);
+    } else  if(account.owner === matchResult.gain) {
+        // Won
+        account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 1.0, account.elo_rating);
     }
     else if(account.owner === matchResult.loss){
         // Lost
@@ -125,6 +124,7 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
     console.log(matchResult.pgnText);
     let account_one:AccountService;
     let account_two:AccountService;
+    
     getUserAccount(matchResult.gain).get().then((snapshot) => {
         account_one = <AccountService> snapshot.docs[0].data();
         getUserAccount(matchResult.loss).get().then((snapshot2) => {
@@ -221,7 +221,7 @@ export const forceEvaluateMatch = (req,res) => {
         const matchResult: MatchResult = {
           pgnText : match.players.WHITE.pgn,   
           matchId : snapshot.key || '',
-          matchStatus: "ABANDONMENT",
+          matchStatus: MatchStatus.ABANDONMENT,
           gain: gain,
           loss: loss,
           _id: snapshot.key || ''

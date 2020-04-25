@@ -59,9 +59,16 @@ export class PlayerSection {
 export interface Round {
     playerNumber: string;
     scheduledColor: string | undefined;
-    result: string | undefined;
+    result: string;
 }
 
+export function CreateRoundFactory(playerNumber: string, scheduledColor: string, result: string) :Round {
+    return {
+        result : result,
+        scheduledColor: scheduledColor,
+        playerNumber: playerNumber
+    }
+}
 
 export class SwissTeam {
     public id: string = "013";

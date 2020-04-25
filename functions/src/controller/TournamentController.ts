@@ -1,11 +1,11 @@
 import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
-import { SwissTournament, Tournament, PlayerSection, Round } from '../domain/Tournament';
+import { SwissTournament, Tournament, PlayerSection, Round, CreateRoundFactory } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
-import { MatchResult } from '../service/MatchService';
+import { MatchResult, MatchStatus } from '../service/MatchService';
 import { getMatchableAccount } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 
@@ -142,18 +142,34 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
 export const evaluateTournamentMatch = async (req: Request, res: Response) => {
     const matchResult = <MatchResult> req.body();
     const tournamentId = req.query.tournamentId;
-    if(matchResult && tournamentId) {
-        const gainAccountSnapshot = await getMatchableAccount(matchResult.gain);
-        const lossAccountSnapshot = await getMatchableAccount(matchResult.loss);
-        const tournament = await getTournamentByID(tournamentId);
-        
-        if(tournament && lossAccountSnapshot.exists() && gainAccountSnapshot.exists()) {
-            const gainAccount = <MatchedPlayOnlineTournamentAccount> gainAccountSnapshot.val();
-            const lossAccount = <MatchedPlayOnlineTournamentAccount> lossAccountSnapshot.val();
-            if(gainAccount.isForTournament && lossAccount.isForTournament) {
-                 
+    try  {
+        if(matchResult && tournamentId) {
+            const gainAccountSnapshot = await getMatchableAccount(matchResult.gain);
+            const lossAccountSnapshot = await getMatchableAccount(matchResult.loss);            
+            if(lossAccountSnapshot.exists() && gainAccountSnapshot.exists()) {
+                const gainAccount = <MatchedPlayOnlineTournamentAccount> gainAccountSnapshot.val();
+                const lossAccount = <MatchedPlayOnlineTournamentAccount> lossAccountSnapshot.val();
+                let tournament: Tournament;
+                if(gainAccount.isForTournament && lossAccount.isForTournament) {
+                    let gainRound: Round;
+                    let lossRound:Round;
+                    if(matchResult.matchStatus === MatchStatus.DRAW) {
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '=');
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '=');     
+                    } else if (matchResult.matchStatus === MatchStatus.ABANDONMENT) { // In the event of a forfeit
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '+');
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '-');
+                    } else {
+                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '1');
+                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '0');
+                    }
+                    tournament = await updatePlayerRounds(tournamentId, lossAccount.oppenentRank, gainRound, gainAccount.oppenentRank, lossRound);
+                    res.status(200).send(tournament);
+                }
             }
         }
+    }catch (error) {
+        console.error(error);
     }
     res.status(403).send({err: "Invalid Request"});
 }
