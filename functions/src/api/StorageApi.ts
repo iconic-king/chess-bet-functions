@@ -4,6 +4,7 @@ import { PGNObject } from "../domain/PGNObject";
 
 const storage = admin.storage();
 import fileSystem from 'fs';
+// tslint:disable-next-line: no-implicit-dependencies
 import uuidv4 from 'uuid/v4';
 
 
@@ -41,7 +42,6 @@ export class StorageApi {
             action: 'read',
             expires: '10-12-2100'
         });
-        console.log(urls[0]);
         unlinkPromise(file);
         return urls[0];
     }

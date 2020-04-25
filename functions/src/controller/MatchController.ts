@@ -195,14 +195,6 @@ export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Funct
     });
 }
 
-// export const evaluateTournamentMatchResult = async (gain: MatchedPlayOnlineTournamentAccount, loss: MatchedPlayOnlineTournamentAccount, result: MatchResult) => {
-//   const gainUserAccountSnapshot = await getUserAccount(gain.owner).get();
-//   const lossUserAccountSnapshot = await getUserAccount(loss.owner).get();
-
-// //   if()
-// }
-
-
 /**
  * @deprecated
  * @param req 
