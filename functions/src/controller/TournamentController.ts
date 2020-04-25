@@ -149,7 +149,7 @@ export const evaluateTournamentMatch = async (req: Request, res: Response) => {
             if(lossAccountSnapshot.exists() && gainAccountSnapshot.exists()) {
                 const gainAccount = <MatchedPlayOnlineTournamentAccount> gainAccountSnapshot.val();
                 const lossAccount = <MatchedPlayOnlineTournamentAccount> lossAccountSnapshot.val();
-                let tournament: Tournament;
+                let tournament: any;
                 if(gainAccount.isForTournament && lossAccount.isForTournament) {
                     let gainRound: Round;
                     let lossRound:Round;
@@ -164,6 +164,10 @@ export const evaluateTournamentMatch = async (req: Request, res: Response) => {
                         lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '0');
                     }
                     tournament = await updatePlayerRounds(tournamentId, lossAccount.oppenentRank, gainRound, gainAccount.oppenentRank, lossRound);
+                    if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
+                        tournament = <SwissTournament> tournament;
+                        tournament = await TPSApi.validateSwissTournament(tournament);
+                    }
                     res.status(200).send(tournament);
                 }
             }
