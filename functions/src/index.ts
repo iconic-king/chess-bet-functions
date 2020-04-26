@@ -29,7 +29,6 @@ import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
-import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation } from './controller/TournamentController';
@@ -42,6 +41,7 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
 
 /** User Account Deletion */
 export const onUserDeleted = functions.auth.user().onDelete((user) => {
+    // tslint:disable-next-line: no-floating-promises
     onUserAccountDeleted(user);
 });
 
@@ -187,17 +187,19 @@ app.post('/addSpecs', (req,res) => {
     }
 });
 
-app.post('/evaluateMatch',(req, res) =>{
+app.post('/evaluateMatch', (req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST'){
         const matchResult = <MatchResult> req.body;      
-        verifyToken(req, res, ()=> {
-            evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
-                // Send Response For Analysis
-                res.send(evaluationResponse);
-            });
+        verifyToken(req, res, async ()=> {
+                const result = await evaluateAndStoreMatch(matchResult);
+                if(result) {
+                    res.status(200).send(result);
+                } else {
+                    res.status(503).send({err : 'Evaluation did not take place'});
+                }
         });
     }
 });

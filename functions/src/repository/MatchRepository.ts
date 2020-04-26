@@ -47,21 +47,13 @@ export const getMatchableAccount = (uid: string) => {
    })
 }
 
-export const removeMatch = (matchId: string, callback: Function) => {
+export const removeMatch = (matchId: string) => {
   console.log("Removing match id ", matchId);
-  matchesReference.child(matchId).remove().then(()=>{
-    callback()
-  }).catch((err)=>{
-    console.error(err);
-  })
+  return matchesReference.child(matchId).remove();
 }
 
-export const removeMatchable = (matchableId: string, callback: Function) => {
-  matchableReference.child((matchableId)).remove().then(()=> {
-    callback();
-  }).catch((err)=>{
-    console.error(err);
-  });
+export const removeMatchable = (matchableId: string) => {
+  return matchableReference.child((matchableId)).remove();
 }
 
 // TODO Add duration and date of match creaton
