@@ -29,7 +29,6 @@ import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
-import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation } from './controller/TournamentController';
@@ -194,12 +193,12 @@ app.post('/evaluateMatch',(req, res) =>{
     if(req.method === 'POST'){
         const matchResult = <MatchResult> req.body;      
         verifyToken(req, res, async ()=> {
-            const result = await evaluateAndStoreMatch(matchResult);
-            if(result) {
-                res.status(200).send(result);
-            } else {
-                res.status(503).send({err : 'Evaluation did not take place'});
-            }
+                const result = await evaluateAndStoreMatch(matchResult);
+                if(result) {
+                    res.status(200).send(result);
+                } else {
+                    res.status(503).send({err : 'Evaluation did not take place'});
+                }
         });
     }
 });
