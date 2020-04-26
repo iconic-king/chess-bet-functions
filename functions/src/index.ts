@@ -41,6 +41,7 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
 
 /** User Account Deletion */
 export const onUserDeleted = functions.auth.user().onDelete((user) => {
+    // tslint:disable-next-line: no-floating-promises
     onUserAccountDeleted(user);
 });
 
@@ -186,7 +187,7 @@ app.post('/addSpecs', (req,res) => {
     }
 });
 
-app.post('/evaluateMatch',(req, res) =>{
+app.post('/evaluateMatch', (req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
