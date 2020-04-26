@@ -73,7 +73,6 @@ export interface MatchService{
 /**
  *  Will be used by the endpoint to get match details while also passing the result
  */
-
  interface Player{
     owner :string;
     events : Array<MatchEvent> ;
