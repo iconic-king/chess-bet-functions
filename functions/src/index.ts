@@ -194,11 +194,11 @@ app.post('/evaluateMatch',(req, res) =>{
     if(req.method === 'POST'){
         const matchResult = <MatchResult> req.body;      
         verifyToken(req, res, async ()=> {
-            try {
-                await evaluateAndStoreMatch(matchResult);
-                res.status(200).send(matchResult);
-            } catch (error) {
-                res.status(403).send(error);
+            const result = await evaluateAndStoreMatch(matchResult);
+            if(result) {
+                res.status(200).send(result);
+            } else {
+                res.status(503).send({err : 'Evaluation did not take place'});
             }
         });
     }
