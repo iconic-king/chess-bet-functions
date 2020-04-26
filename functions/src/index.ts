@@ -193,11 +193,13 @@ app.post('/evaluateMatch',(req, res) =>{
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST'){
         const matchResult = <MatchResult> req.body;      
-        verifyToken(req, res, ()=> {
-            evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
-                // Send Response For Analysis
-                res.send(evaluationResponse);
-            });
+        verifyToken(req, res, async ()=> {
+            try {
+                await evaluateAndStoreMatch(matchResult);
+                res.status(200).send(matchResult);
+            } catch (error) {
+                res.status(403).send(error);
+            }
         });
     }
 });
