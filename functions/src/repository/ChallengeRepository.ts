@@ -2,12 +2,16 @@
  * @autjor Collins Magondu 26/03/2020
  */
 import * as admin from 'firebase-admin';
-import { ChallengeDTO, Challenge, ChallengeResponse } from '../domain/Challenge';
+import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
-import { MatchableAccount } from '../service/AccountService';
+import { MatchableAccount, UserService } from '../service/AccountService';
 import { setMatchableAccount } from './MatchRepository';
+import { getUserByUID } from './UserRepository';
+import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
+import { sendMessage } from '../controller/FCMController';
 
 const firestoreDatabase = admin.firestore();
+const targetedChallengesCollection = 'targeted_challanges';
 
 function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
  return {
@@ -111,3 +115,32 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
         });
     }
 };
+
+
+export const createTargetedChallenge = async (targetedChallenge: TargetedChallenge) => {
+    targetedChallenge.id = firestoreDatabase.collection(targetedChallengesCollection).doc().id;
+    await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
+    // Notification To Target
+    const usersSnapshot = await getUserByUID(targetedChallenge.target);
+    if(!usersSnapshot.empty) {
+        const user = <UserService> usersSnapshot.docs[0].data();
+        if(user.fcmToken) {
+            // Create FCM_MESSAGE
+            const fcmMessage: FCMMessageService = {
+                message : `Do you think you can beat me in Chess !!`,
+                from: targetedChallenge.ownerName,
+                data: '',
+                messageType: FCMMessageType.TARGET_CHALLENGE,
+                fromUID: targetedChallenge.owner,
+                registrationTokens: [user.fcmToken]
+            }
+            const response = await sendMessage(fcmMessage);
+            if(response.successCount > 0) {
+                console.log("Notification Sent");
+            }
+        }
+        return targetedChallenge;
+    } else {
+        throw new Error('No user found for target');
+    }
+}

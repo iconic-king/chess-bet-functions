@@ -9,7 +9,8 @@ export interface FCMMessageService{
 
 
 export enum FCMMessageType{
-    "CHALLENGE",
-    "INFORMATION",
-    "CHAT"
+    CHALLENGE = "CHALLENGE",
+    INFORMATION = "INFORMATION",
+    CHAT =  "CHAT",
+    TARGET_CHALLENGE = 'TARGET_CHALLENGE'
 }

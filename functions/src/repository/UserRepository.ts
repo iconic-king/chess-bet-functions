@@ -57,6 +57,7 @@ export const createUser = (user:admin.auth.UserRecord) => {
   permissions:[],
   user_name : user.displayName === undefined ? 'anonymous' : user.displayName,
   profile_photo_url : user.photoURL === undefined ? '' : user.photoURL,
+  fcmToken: ''
  }
 
  return firestoreDatabase.collection("users").doc(user.uid).set(user_account);

@@ -24,7 +24,7 @@ import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEva
 import { markAssignmentImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
-import { onRandomChallengeRecieved } from './controller/ChallengeController'
+import { onRandomChallengeRecieved, onTargetedChallengeReceived } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -106,6 +106,11 @@ app.post('/forceEvaluateMatch', (req,res) => {
     }
  });
 
+
+ app.post('/challenge/sendTargetedChallenge', (req, res) => {
+    onTargetedChallengeReceived(req, res);
+ });
+
  app.post('/club/createClubAccount', (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -125,6 +130,7 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
+            // tslint:disable-next-line: no-floating-promises
             sendFCMMessage(req, res);
         }); 
     } else{

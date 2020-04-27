@@ -9,6 +9,7 @@ export interface UserService{
     date_created: string,
     date_modified: string,
     user_name: string;
+    fcmToken: string;
     profile_photo_url:string
     permissions: Array<Permission>
 }

@@ -15,6 +15,18 @@ export interface Challenge {
     type: Type;
 }
 
+export interface TargetedChallenge {
+    id: string;
+    owner: string;
+    ownerName: string;
+    matchType: MatchType;
+    target: string;
+    targetName: string;
+    accepted: boolean;
+    timeStamp: number;
+    dateCreated: string;
+}
+
 export enum ChallengeResponse {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
