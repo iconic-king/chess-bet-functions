@@ -1,6 +1,6 @@
 import { Response, Request } from 'firebase-functions';
 import { ChallengeDTO, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
-import { getOrSetChallenge, createTargetedChallenge } from '../repository/ChallengeRepository';
+import { getOrSetChallenge, createTargetedChallenge, acceptTargetedChallenge } from '../repository/ChallengeRepository';
 
 export const onRandomChallengeRecieved = (req: Request, res: Response) => {
     const challengeDTO = <ChallengeDTO>  req.body;
@@ -21,4 +21,15 @@ export const onTargetedChallengeReceived = (req: Request, res: Response) => {
             res.status(403).send({err : error});
         });
     }
+}
+
+
+export const onTargetedChallengeAccepted = (req: Request, res: Response) => {
+    const targetedChallenge = <TargetedChallenge> req.body;
+    acceptTargetedChallenge(targetedChallenge).then((response) => {
+        res.status(200).send(response);
+    }).catch(error => {
+        console.error(error);
+        res.status(403).send({err : error});
+    })
 }
