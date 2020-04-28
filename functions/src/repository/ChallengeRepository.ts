@@ -11,7 +11,7 @@ import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService'
 import { sendMessage } from '../controller/FCMController';
 
 const firestoreDatabase = admin.firestore();
-const targetedChallengesCollection = 'targeted_challanges';
+const targetedChallengesCollection = 'targeted_challenges';
 
 function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
  return {
