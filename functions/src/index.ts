@@ -24,7 +24,7 @@ import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEva
 import { markAssignmentImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
-import { onRandomChallengeRecieved } from './controller/ChallengeController'
+import { onRandomChallengeRecieved, onTargetedChallengeReceived, onTargetedChallengeAccepted } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -49,7 +49,7 @@ export const onUserDeleted = functions.auth.user().onDelete((user) => {
  *  Attempts to listener to any update on a challenge in order to set a match
  * */ 
 
-export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onUpdate((snap, context) => {
+export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite((snap, context) => {
     const challenge = <Challenge> snap.after.data();
     if(challenge.accepted){
         // Handle set up of match
@@ -106,6 +106,15 @@ app.post('/forceEvaluateMatch', (req,res) => {
     }
  });
 
+
+ app.post('/challenge/sendTargetedChallenge', (req, res) => {
+    onTargetedChallengeReceived(req, res);
+ });
+
+ app.post("/challenge/acceptTargetChallenge", (req, res) => {
+    onTargetedChallengeAccepted(req, res);
+})
+
  app.post('/club/createClubAccount', (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -125,6 +134,7 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
+            // tslint:disable-next-line: no-floating-promises
             sendFCMMessage(req, res);
         }); 
     } else{
