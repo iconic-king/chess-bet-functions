@@ -120,6 +120,7 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
 export const createTargetedChallenge = async (targetedChallenge: TargetedChallenge) => {
     targetedChallenge.id = firestoreDatabase.collection(targetedChallengesCollection).doc().id;
     targetedChallenge.dateCreated  = new Date().toLocaleDateString();
+    targetedChallenge.timeStamp = new Date().getTime();
     await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
     // Notification To Target
     const usersSnapshot = await getUserByUID(targetedChallenge.target);
