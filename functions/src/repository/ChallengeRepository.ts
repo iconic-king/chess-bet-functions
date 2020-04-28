@@ -121,6 +121,7 @@ export const createTargetedChallenge = async (targetedChallenge: TargetedChallen
     targetedChallenge.id = firestoreDatabase.collection(targetedChallengesCollection).doc().id;
     targetedChallenge.dateCreated  = new Date().toLocaleDateString();
     targetedChallenge.timeStamp = new Date().getTime();
+    targetedChallenge.accepted =  false;
     await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
     // Notification To Target
     const usersSnapshot = await getUserByUID(targetedChallenge.target);
