@@ -108,11 +108,15 @@ app.post('/forceEvaluateMatch', (req,res) => {
 
 
  app.post('/challenge/sendTargetedChallenge', (req, res) => {
-    onTargetedChallengeReceived(req, res);
+    verifyToken(req, res, () => { 
+        onTargetedChallengeReceived(req, res);
+    });
  });
 
  app.post("/challenge/acceptTargetChallenge", (req, res) => {
-    onTargetedChallengeAccepted(req, res);
+    verifyToken(req, res, () => { 
+        onTargetedChallengeAccepted(req, res);
+    });
 })
 
  app.post('/club/createClubAccount', (req,res) => {
@@ -220,34 +224,46 @@ app.post('/evaluateMatch', (req, res) =>{
 // ----------------------------- TOURNAMENT SERVICE START ------------------------------------------------
 
 app.post('/tournament/validate',(req, res) => {
+    verifyToken(req, res, () => {
     // tslint:disable-next-line: no-floating-promises
     validateTournamentImplementation(req, res);
+    })
 });
 
 app.post('/tournament/pair',(req, res) => {
-    // tslint:disable-next-line: no-floating-promises
-    getTournamentParingsImplementation(req, res);
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        getTournamentParingsImplementation(req, res);
+    })
 });
 
 
 app.post('/tournament/createTournament', (req, res) =>  {
-    // tslint:disable-next-line: no-floating-promises
-    createTournamentImplementation(req, res);
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        createTournamentImplementation(req, res);
+    });
 });
 
 app.post('/tournament/addPlayers', (req, res) =>  {
-    // tslint:disable-next-line: no-floating-promises
-    addPlayersToTournamentImplementation(req, res);
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        addPlayersToTournamentImplementation(req, res);
+    });
 });
 
 app.post('/tournament/schedule', (req, res) =>  {
+    verifyToken(req, res, () => { 
     // tslint:disable-next-line: no-floating-promises
     scheduleTournamentMatchesImplementation(req, res);
+    });
 });
 
 app.post('/tournament/evaluateTounamentMatch', (req, res) => {
-    // tslint:disable-next-line: no-floating-promises
-    evaluateTournamentMatchImplementation(req, res);
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        evaluateTournamentMatchImplementation(req, res);
+    });
 });
 
 
