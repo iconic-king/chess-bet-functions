@@ -49,6 +49,7 @@ export interface TargetedChallenge {
     accepted: boolean;
     timeStamp: number;
     dateCreated: string;
+    users: Array<string>; // Used to fetch queries collectively
 }
 
 export enum ChallengeResponse {
