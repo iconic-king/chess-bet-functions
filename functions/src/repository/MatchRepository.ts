@@ -180,3 +180,13 @@ export const createDirectMatchFromTargetedChallenge = (targetChallenge: Targeted
   map.matches[targetChallenge.owner.concat(targetChallenge.target)] = createMatch(targetChallenge.owner, targetChallenge.target, targetChallenge.matchType);
   return realtimeDatabase.ref().update(map);
 }
+
+export const canUserGetMatched = async (uid: string) => {
+  const matchedAccountSnapshot = await matchableReference.child(uid).once('value');
+  if(matchedAccountSnapshot.exists()){
+    const matchedAccount = <MatchedPlayOnlineAccount> matchedAccountSnapshot.val();
+    return matchedAccount.matchable; 
+  } else {
+    return false
+  }
+} 

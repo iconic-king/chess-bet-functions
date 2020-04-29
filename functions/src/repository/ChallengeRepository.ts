@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
 import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
 import { MatchableAccount, UserService } from '../service/AccountService';
-import { setMatchableAccount, createDirectMatchFromTargetedChallenge } from './MatchRepository';
+import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGetMatched} from './MatchRepository';
 import { getUserByUID } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
 import { sendMessage } from '../controller/FCMController';
@@ -124,6 +124,13 @@ export const createTargetedChallenge = async (targetedChallenge: TargetedChallen
     targetedChallenge.accepted =  false;
     targetedChallenge.users = new Array();
     targetedChallenge.users.push(targetedChallenge.owner, targetedChallenge.target);
+
+    const matchable = await canUserGetMatched(targetedChallenge.target);
+
+    if(!matchable) {
+        throw new Error('Target has an ongoing match')
+    }
+
     await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
     // Notification To Target
     const usersSnapshot = await getUserByUID(targetedChallenge.target);
