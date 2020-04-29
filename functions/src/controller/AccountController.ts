@@ -28,11 +28,9 @@ export const createUserAccountImplementation = (user : auth.UserRecord) => {
 
 }
 
-export const onUserAccountDeleted = (user: auth.UserRecord) => {
+export const onUserAccountDeleted = async (user: auth.UserRecord) => {
     deleteUserAccount(user.uid);
-    removeMatchable(user.uid, () => {
-        console.log("Removed Matchable Account");
-    });
+    await removeMatchable(user.uid);
 }
 
 export const onUserUpdate = (req: Request, res: Response) => {

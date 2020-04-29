@@ -16,12 +16,14 @@ export function createMatchEvaluationQueue () {
         specId: 'spec_1',
         sanitize: false,
     }
-    new Queue(queueRef ,options, (data, progress,resolve,reject) => {
+    new Queue(queueRef ,options, async (data, progress,resolve,reject) => {
         const matchResult = <MatchResult> data;
-        evaluateAndStoreMatch(matchResult, ()=> {
-            console.log("Data 10");
+        const result = await evaluateAndStoreMatch(matchResult);
+        if(result) {
             resolve(matchResult);
-        });
+        }else {
+            reject({err: 'Error occured'});
+        }
     });
     console.log("MATCH EVALUATION QUEUE CREATED");
 }

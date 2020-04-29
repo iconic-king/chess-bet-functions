@@ -6,7 +6,7 @@ import { AccountService, MatchRange ,MatchService, MatchDetailsService, Matchabl
 
 import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
-import { MatchResult } from '../service/MatchService';
+import { MatchResult, MatchStatus } from '../service/MatchService';
 import { MatchTask, addTaskToQueue } from './MatchQueue';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
 
@@ -78,13 +78,12 @@ function newRating (expected_score: number, score: number, rating: number){
 }
 
 function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : number {
-    if(account.owner === matchResult.gain) {
-        // Won
-        account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 1.0, account.elo_rating);
-    }
-    else if (matchResult.matchStatus === 'DRAW') {
+    if (matchResult.matchStatus === MatchStatus.DRAW) {
         // Draw
         account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 0.5 , account.elo_rating);
+    } else  if(account.owner === matchResult.gain) {
+        // Won
+        account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 1.0, account.elo_rating);
     }
     else if(account.owner === matchResult.loss){
         // Lost
@@ -121,85 +120,75 @@ function exchangePoints(account_one: AccountService, account_two :AccountService
     }
 }
 
-export const evaluateAndStoreMatch =  (matchResult: MatchResult, callback: Function) => {
-    console.log(matchResult.pgnText);
-    let account_one:AccountService;
-    let account_two:AccountService;
-    getUserAccount(matchResult.gain).get().then((snapshot) => {
-        account_one = <AccountService> snapshot.docs[0].data();
-        getUserAccount(matchResult.loss).get().then((snapshot2) => {
-            account_two = <AccountService> snapshot2.docs[0].data();
-            exchangePoints(account_one, account_two, matchResult);
-            getMatch(matchResult.matchId).then((snapshot3)=>{
-                if(snapshot3.exists){
-                const match = <MatchService>snapshot3.val();
-                const match_details: MatchDetailsService = {
-                    match_result : matchResult,
-                    match_type : match.match_type,
-                    players : [
-                        {
-                            owner : match.players.BLACK.owner,
-                            elo_rating : decidePlayerRating(account_one,account_two,match.players.BLACK.owner),
-                            events : match.players.BLACK.events,
-                            type : 'BLACK'
-                        },
-                        {
-                            owner : match.players.WHITE.owner,
-                            elo_rating : decidePlayerRating(account_one,account_two,match.players.WHITE.owner),
-                            events : match.players.WHITE.events,
-                            type : 'WHITE'
-                        }
-                    ],
-                    matchPgn: matchResult.pgnText
-                }
-                if(account_one.matches === undefined){
-                    account_one.matches = new Array<MatchDetailsService>();
-                }
-                if(account_two.matches === undefined) {
-                    account_two.matches = new Array<MatchDetailsService>();
-                }
-                account_one.matches.push(match_details);
-                account_two.matches.push(match_details); 
-                updateAccount(account_one).then(()=>{
-                    updateAccount(account_two).then(()=>{
-                        // Confirms match has been scored
-                        removeMatchable(account_one.owner, ()=> {
-                            removeMatchable(account_two.owner, ()=>{
-                                removeMatch(matchResult.matchId, ()=>{
-                                    const evaluationResponse = <MatchEvaluationResponse> {
-                                        ownerOne : account_one.owner,
-                                        ownerTwo: account_two.owner,
-                                        ownerOneElo : account_one.elo_rating,
-                                        ownerTwoElo : account_two.elo_rating
-                                    }
-                                    callback(evaluationResponse);
-                                })
-                            });
-                        });
-                    }).catch((err)=>{
-                        console.error(err.message);
-                        
-                    })
-                }).catch((err)=>{
-                    console.error(err.message);
-                })
+export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
+    try {
+        let account_one:AccountService;
+        let account_two:AccountService;
+        const accountOneSnapshot =  await getUserAccount(matchResult.gain).get();
+        account_one  = <AccountService> accountOneSnapshot.docs[0].data();
+        const accountTwoSnapshot =  await getUserAccount(matchResult.loss).get();
+        account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
+        exchangePoints(account_one, account_two, matchResult);
+        const matchSnaphot = await getMatch(matchResult.matchId);
+        if(matchSnaphot.exists()) {
+            const match = <MatchService> matchSnaphot.val();
+            const match_details: MatchDetailsService = {
+                match_result : matchResult,
+                match_type : match.match_type,
+                players : [
+                    {
+                        owner : match.players.BLACK.owner,
+                        elo_rating : decidePlayerRating(account_one,account_two,match.players.BLACK.owner),
+                        events : match.players.BLACK.events,
+                        type : 'BLACK'
+                    },
+                    {
+                        owner : match.players.WHITE.owner,
+                        elo_rating : decidePlayerRating(account_one,account_two,match.players.WHITE.owner),
+                        events : match.players.WHITE.events,
+                        type : 'WHITE'
+                    }
+                ],
+                matchPgn: matchResult.pgnText
             }
-        }).catch((err) =>{
-            console.error(err.message);
-        })
-        }).catch((err) =>{
-            console.error(err.message);
-        });
-    }).catch((err) =>{
-        console.error(err.message);
-    });
+            if(account_one.matches === undefined){
+                account_one.matches = new Array<MatchDetailsService>();
+            }
+            if(account_two.matches === undefined) {
+                account_two.matches = new Array<MatchDetailsService>();
+            }
+            account_one.matches.push(match_details);
+            account_two.matches.push(match_details); 
+    
+            // Run transaction
+            await updateAccount(account_one);
+            await updateAccount(account_two);
+            await removeMatchable(account_one.owner);
+            await removeMatchable(account_two.owner);
+            await removeMatch(matchResult.matchId);
+    
+            return <MatchEvaluationResponse> {
+                ownerOne : account_one.owner,
+                ownerTwo: account_two.owner,
+                ownerOneElo : account_one.elo_rating,
+                ownerTwoElo : account_two.elo_rating
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
 }
 
-
+/**
+ * @deprecated
+ * @param req 
+ * @param res 
+ */
 export const forceEvaluateMatch = (req,res) => {
     const matchId = req.body;
-    getMatch(matchId).then(snapshot => {
-        if(snapshot.exists){
+    getMatch(matchId).then(async snapshot => {
+        if(snapshot.exists()){
         const match = <MatchService> snapshot.val();
         const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
         ? match.players.WHITE.owner : match.players.BLACK.owner; 
@@ -209,14 +198,13 @@ export const forceEvaluateMatch = (req,res) => {
         const matchResult: MatchResult = {
           pgnText : match.players.WHITE.pgn,   
           matchId : snapshot.key || '',
-          matchStatus: "ABANDONMENT",
+          matchStatus: MatchStatus.ABANDONMENT,
           gain: gain,
           loss: loss,
           _id: snapshot.key || ''
         }
-        evaluateAndStoreMatch(matchResult, (evaluationResponse) => {
-            console.log("Match Evaluation Done ", evaluationResponse);
-        }); 
+        // tslint:disable-next-line: no-floating-promises
+        await evaluateAndStoreMatch(matchResult); 
         res.status(200).send();
         }
     }).catch(error =>{

@@ -2,12 +2,16 @@
  * @autjor Collins Magondu 26/03/2020
  */
 import * as admin from 'firebase-admin';
-import { ChallengeDTO, Challenge, ChallengeResponse } from '../domain/Challenge';
+import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
-import { MatchableAccount } from '../service/AccountService';
-import { setMatchableAccount } from './MatchRepository';
+import { MatchableAccount, UserService } from '../service/AccountService';
+import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGetMatched} from './MatchRepository';
+import { getUserByUID } from './UserRepository';
+import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
+import { sendMessage } from '../controller/FCMController';
 
 const firestoreDatabase = admin.firestore();
+const targetedChallengesCollection = 'targeted_challenges';
 
 function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
  return {
@@ -111,3 +115,90 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
         });
     }
 };
+
+
+export const createTargetedChallenge = async (targetedChallenge: TargetedChallenge) => {
+    targetedChallenge.id = firestoreDatabase.collection(targetedChallengesCollection).doc().id;
+    targetedChallenge.dateCreated  = new Date().toLocaleDateString();
+    targetedChallenge.timeStamp = new Date().getTime();
+    targetedChallenge.accepted =  false;
+    targetedChallenge.users = new Array();
+    targetedChallenge.users.push(targetedChallenge.owner, targetedChallenge.target);
+
+    const matchable = await canUserGetMatched(targetedChallenge.target);
+
+    if(!matchable) {
+        throw new Error('Target has an ongoing match')
+    }
+
+    await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
+    // Notification To Target
+    const usersSnapshot = await getUserByUID(targetedChallenge.target);
+    if(!usersSnapshot.empty) {
+        const user = <UserService> usersSnapshot.docs[0].data();
+        if(user.fcmToken) {
+            // Create FCM_MESSAGE
+            const fcmMessage: FCMMessageService = {
+                message : `Do you think you can beat me in Chess !!`,
+                from: targetedChallenge.ownerName,
+                data: '',
+                messageType: FCMMessageType.TARGET_CHALLENGE,
+                fromUID: targetedChallenge.owner,
+                registrationTokens: [user.fcmToken]
+            }
+            const response = await sendMessage(fcmMessage);
+            if(response.successCount > 0) {
+                console.log("Notification Sent");
+            }
+        }
+        return targetedChallenge;
+    } else {
+        throw new Error('No user found for target');
+    }
+}
+
+export const acceptTargetedChallenge = async (targetedChallenge: TargetedChallenge) => {
+    if(targetedChallenge.owner && targetedChallenge.target) {
+        const usersSnapshot = await getUserByUID(targetedChallenge.owner);
+        if(!usersSnapshot.empty) {
+            const user = <UserService> usersSnapshot.docs[0].data();
+            const targetedChallengeRef = firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id);
+            // Create a direct match
+            const matchable = await canUserGetMatched(targetedChallenge.owner);
+
+            if(!matchable) {
+                throw new Error('Target has an ongoing match')
+            }            
+            await createDirectMatchFromTargetedChallenge(targetedChallenge);
+            const result = await firestoreDatabase.runTransaction(async (transaction) => {
+                targetedChallenge.accepted = true;
+                transaction.update(targetedChallengeRef, targetedChallenge);
+                return true;
+            });
+            if(!result) {
+                throw new Error('Transaction Incomplete');
+            }
+
+            if(user.fcmToken){
+                // Create FCM_MESSAGE
+                const fcmMessage: FCMMessageService = {
+                    message : `I accept your challenge !!`,
+                    from: targetedChallenge.targetName,
+                    data: '',
+                    messageType: FCMMessageType.TARGET_CHALLENGE,
+                    fromUID: targetedChallenge.target,
+                    registrationTokens: [user.fcmToken]
+                }
+                const response = await sendMessage(fcmMessage);
+                if(response.successCount > 0) {
+                    console.log("Notification Sent");
+                }                
+            }
+            return targetedChallenge;
+        } else {
+            throw new Error('No user found for owner');
+        }        
+    } else {
+        throw new Error('Invalid Data');
+    }
+} 

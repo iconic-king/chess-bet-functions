@@ -24,14 +24,14 @@ import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEva
 import { markAssignmentImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
-import { onRandomChallengeRecieved } from './controller/ChallengeController'
+import { onRandomChallengeRecieved, onTargetedChallengeReceived, onTargetedChallengeAccepted } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
-import { MatchEvaluationResponse } from './domain/MatchEvaluationResponse';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation } from './controller/TournamentController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -41,6 +41,7 @@ export const onUserCreated = functions.auth.user().onCreate((user) => {
 
 /** User Account Deletion */
 export const onUserDeleted = functions.auth.user().onDelete((user) => {
+    // tslint:disable-next-line: no-floating-promises
     onUserAccountDeleted(user);
 });
 
@@ -48,7 +49,7 @@ export const onUserDeleted = functions.auth.user().onDelete((user) => {
  *  Attempts to listener to any update on a challenge in order to set a match
  * */ 
 
-export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onUpdate((snap, context) => {
+export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite((snap, context) => {
     const challenge = <Challenge> snap.after.data();
     if(challenge.accepted){
         // Handle set up of match
@@ -70,6 +71,7 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
+            // tslint:disable-next-line: deprecation
             forceEvaluateMatch(req, res);
         });
     } else{
@@ -104,6 +106,19 @@ app.post('/forceEvaluateMatch', (req,res) => {
     }
  });
 
+
+ app.post('/challenge/sendTargetedChallenge', (req, res) => {
+    verifyToken(req, res, () => { 
+        onTargetedChallengeReceived(req, res);
+    });
+ });
+
+ app.post("/challenge/acceptTargetChallenge", (req, res) => {
+    verifyToken(req, res, () => { 
+        onTargetedChallengeAccepted(req, res);
+    });
+})
+
  app.post('/club/createClubAccount', (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
@@ -123,6 +138,7 @@ app.post('/forceEvaluateMatch', (req,res) => {
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST') {
         verifyToken(req, res, ()=> {
+            // tslint:disable-next-line: no-floating-promises
             sendFCMMessage(req, res);
         }); 
     } else{
@@ -185,22 +201,73 @@ app.post('/addSpecs', (req,res) => {
     }
 });
 
-app.post('/evaluateMatch',(req, res) =>{
+app.post('/evaluateMatch', (req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
     if(req.method === 'POST'){
         const matchResult = <MatchResult> req.body;      
-        verifyToken(req, res, ()=> {
-            evaluateAndStoreMatch(matchResult, (evaluationResponse: MatchEvaluationResponse)=> {
-                // Send Response For Analysis
-                res.send(evaluationResponse);
-            });
+        verifyToken(req, res, async ()=> {
+                const result = await evaluateAndStoreMatch(matchResult);
+                if(result) {
+                    res.status(200).send(result);
+                } else {
+                    res.status(503).send({err : 'Evaluation did not take place'});
+                }
         });
     }
 });
 
-// ----------------------------- MATCH SERVICE END ----------------------------------------------
+// ----------------------------- MATCH SERVICE END -----------------------------------------------------
+
+
+// ----------------------------- TOURNAMENT SERVICE START ------------------------------------------------
+
+app.post('/tournament/validate',(req, res) => {
+    verifyToken(req, res, () => {
+    // tslint:disable-next-line: no-floating-promises
+    validateTournamentImplementation(req, res);
+    })
+});
+
+app.post('/tournament/pair',(req, res) => {
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        getTournamentParingsImplementation(req, res);
+    })
+});
+
+
+app.post('/tournament/createTournament', (req, res) =>  {
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        createTournamentImplementation(req, res);
+    });
+});
+
+app.post('/tournament/addPlayers', (req, res) =>  {
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        addPlayersToTournamentImplementation(req, res);
+    });
+});
+
+app.post('/tournament/schedule', (req, res) =>  {
+    verifyToken(req, res, () => { 
+    // tslint:disable-next-line: no-floating-promises
+    scheduleTournamentMatchesImplementation(req, res);
+    });
+});
+
+app.post('/tournament/evaluateTounamentMatch', (req, res) => {
+    verifyToken(req, res, () => {
+        // tslint:disable-next-line: no-floating-promises
+        evaluateTournamentMatchImplementation(req, res);
+    });
+});
+
+
+// ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
 
 // ----------------------------- STORAGE FUNCTIONS START  ----------------------------------------------
 export const resizeProfilePhotos = functions.storage.object().onFinalize(event => {

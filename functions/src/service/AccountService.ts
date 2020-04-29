@@ -1,5 +1,6 @@
 import { MatchType } from "../domain/MatchType";
 import { MatchResult } from "./MatchService";
+import { Alliance } from "../domain/Alliance";
 
 export interface UserService{
     email: string | undefined,
@@ -8,6 +9,7 @@ export interface UserService{
     date_created: string,
     date_modified: string,
     user_name: string;
+    fcmToken: string;
     profile_photo_url:string
     permissions: Array<Permission>
 }
@@ -72,7 +74,6 @@ export interface MatchService{
 /**
  *  Will be used by the endpoint to get match details while also passing the result
  */
-
  interface Player{
     owner :string;
     events : Array<MatchEvent> ;
@@ -88,7 +89,7 @@ export interface MatchDetailsService {
     matchPgn: string; //Match PGN String
 }
 
-export class MatchableAccount implements MatchableAccountService{
+export class MatchableAccount implements MatchableAccountService {
     duration: number;
     date_created: string;
     owner: string;
@@ -110,11 +111,11 @@ export class MatchableAccount implements MatchableAccountService{
     }
 }
 
-export class MatchablePlayOnlineAccount extends MatchableAccount{ 
+export class MatchablePlayOnlineAccount extends MatchableAccount { 
 }
 
 
-export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
+export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount {
     opponent : string;
     opponentId: string;
     matchId: string;
@@ -126,6 +127,30 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount{
             this.opponent = opponent;
             this.opponentId = opponentId;
         }
+}
+
+/**
+ * Matchable Account Used For Online Tournament
+ */
+export class MatchablePlayOnlineTournamentAccount extends MatchablePlayOnlineAccount {
+    public isForTournament = true
+    public timeStamp: number | undefined;
+    public createdByUID : string | undefined;
+    public tournamentId: string  | undefined;
+    public email: string | undefined; // Used for notification of a match
+}
+
+// Based on swiss
+export class MatchedPlayOnlineTournamentAccount extends MatchedPlayOnlineAccount {
+    public currentRound!: number;
+    public oppenentRank!: number;
+    public result!: string;
+    public sidePlayed!: Alliance;
+    public isForTournament = true
+    public timeStamp: number | undefined;
+    public createdByUID : string | undefined;
+    public tournamentId: string  | undefined;
+    public email: string | undefined; // Used for notification of a match 
 }
 
 export interface AccountEvent {

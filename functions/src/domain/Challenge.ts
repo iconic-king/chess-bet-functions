@@ -1,4 +1,13 @@
 import { MatchType } from "./MatchType";
+
+/**
+ * Challenge Types Identifies the challenge reciver
+ */
+export enum Type {
+    FRIENDLY = 'FRIENDLY',
+    CHALLENGE = 'CHALLENGE'
+}
+
 /**
  * @author Collins Magondu
  */
@@ -15,6 +24,34 @@ export interface Challenge {
     type: Type;
 }
 
+export const CreateTargetChallengeFactory = (owner: string, matchType: MatchType, target: string , duration: number, type: Type) => {
+    return <Challenge> {
+        owner: owner,
+        matchType: matchType,
+        requester: target,
+        timeStamp: new Date().getTime(),
+        accepted: true,
+        duration: duration,
+        eloRating: 0,
+        minEloRating: 0,
+        maxEloRating: 0,
+        type: type
+    }
+}
+
+export interface TargetedChallenge {
+    id: string;
+    owner: string;
+    ownerName: string;
+    matchType: MatchType;
+    target: string;
+    targetName: string;
+    accepted: boolean;
+    timeStamp: number;
+    dateCreated: string;
+    users: Array<string>; // Used to fetch queries collectively
+}
+
 export enum ChallengeResponse {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
@@ -28,12 +65,4 @@ export enum ChallengeResponse {
 export class ChallengeDTO{
     constructor(public owner:string, public duration: number,
         public eloRating: number, public type: Type, public minEloRating: number, public maxEloRating: number){}
-}
-
-/**
- * Challenge Types Identifies the challenge reciver
- */
-export enum Type {
-    FRIENDLY = 'FRIENDLY',
-    CHALLENGE = 'CHALLENGE'
 }
