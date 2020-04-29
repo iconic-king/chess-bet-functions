@@ -1,8 +1,9 @@
 import * as admin from 'firebase-admin';
-import { MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchedPlayOnlineTournamentAccount} from '../service/AccountService';
+import { MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchedPlayOnlineTournamentAccount, MatchedPlayOnlineAccount} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 import { PlayerSection, SwissTournament } from '../domain/Tournament';
 import { Alliance } from '../domain/Alliance';
+import { TargetedChallenge } from '../domain/Challenge';
 
 const realtimeDatabase = admin.database();
 
@@ -144,4 +145,38 @@ export const createMatch = (black:string, white:string , match_type:MatchType)=>
     scheduleEvaluation: false
   }
   return match;
+}
+
+/**
+ * Creates match directy as a json object withoout depending on a challenge trigger
+ */
+export const createDirectMatchFromTargetedChallenge = (targetChallenge: TargetedChallenge) => {
+  const map = {matchables : {}, matches: {}}
+  map.matchables[targetChallenge.owner] = <MatchedPlayOnlineAccount> {
+    opponent: targetChallenge.targetName,
+    opponentId: targetChallenge.target,
+    owner: targetChallenge.owner,
+    matchable: false,
+    matched: true,
+    elo_rating: 0,
+    match_type: targetChallenge.matchType,
+    online: true,
+    matchId: targetChallenge.owner.concat(targetChallenge.target),
+    duration: 10 // Default Rapid
+  }
+
+  map.matchables[targetChallenge.target] = <MatchedPlayOnlineAccount> {
+    opponent: targetChallenge.ownerName,
+    opponentId: targetChallenge.owner,
+    owner: targetChallenge.target,
+    matchable: false,
+    matched: true,
+    elo_rating: 0,
+    match_type: targetChallenge.matchType,
+    online: true,
+    matchId: targetChallenge.owner.concat(targetChallenge.target),
+    duration: 10 // Default Rapid
+  }
+  map.matches[targetChallenge.owner.concat(targetChallenge.target)] = createMatch(targetChallenge.owner, targetChallenge.target, targetChallenge.matchType);
+  return realtimeDatabase.ref().update(map);
 }

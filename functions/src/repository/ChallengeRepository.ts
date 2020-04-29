@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
 import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, CreateTargetChallengeFactory, Type } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
 import { MatchableAccount, UserService } from '../service/AccountService';
-import { setMatchableAccount } from './MatchRepository';
+import { setMatchableAccount, createDirectMatchFromTargetedChallenge } from './MatchRepository';
 import { getUserByUID } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
 import { sendMessage } from '../controller/FCMController';
@@ -122,6 +122,8 @@ export const createTargetedChallenge = async (targetedChallenge: TargetedChallen
     targetedChallenge.dateCreated  = new Date().toLocaleDateString();
     targetedChallenge.timeStamp = new Date().getTime();
     targetedChallenge.accepted =  false;
+    targetedChallenge.users = new Array();
+    targetedChallenge.users.push(targetedChallenge.owner, targetedChallenge.target);
     await firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id).set(targetedChallenge);
     // Notification To Target
     const usersSnapshot = await getUserByUID(targetedChallenge.target);
@@ -153,13 +155,12 @@ export const acceptTargetedChallenge = async (targetedChallenge: TargetedChallen
         const usersSnapshot = await getUserByUID(targetedChallenge.owner);
         if(!usersSnapshot.empty) {
             const user = <UserService> usersSnapshot.docs[0].data();
-            const newChallengeRef = firestoreDatabase.collection('challenges').doc();
             const targetedChallengeRef = firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id);
+            // Create a direct match
+            await createDirectMatchFromTargetedChallenge(targetedChallenge);
             const result = await firestoreDatabase.runTransaction(async (transaction) => {
                 targetedChallenge.accepted = true;
                 transaction.update(targetedChallengeRef, targetedChallenge);
-                const newChallenge = CreateTargetChallengeFactory(targetedChallenge.owner, targetedChallenge.matchType, targetedChallenge.target, 15, Type.FRIENDLY); 
-                transaction.create(newChallengeRef, newChallenge);
                 return true;
             });
             if(!result) {
