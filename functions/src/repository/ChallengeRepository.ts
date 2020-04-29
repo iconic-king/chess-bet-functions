@@ -164,6 +164,11 @@ export const acceptTargetedChallenge = async (targetedChallenge: TargetedChallen
             const user = <UserService> usersSnapshot.docs[0].data();
             const targetedChallengeRef = firestoreDatabase.collection(targetedChallengesCollection).doc(targetedChallenge.id);
             // Create a direct match
+            const matchable = await canUserGetMatched(targetedChallenge.owner);
+
+            if(!matchable) {
+                throw new Error('Target has an ongoing match')
+            }            
             await createDirectMatchFromTargetedChallenge(targetedChallenge);
             const result = await firestoreDatabase.runTransaction(async (transaction) => {
                 targetedChallenge.accepted = true;
