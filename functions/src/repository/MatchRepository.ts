@@ -153,7 +153,7 @@ export const createMatch = (black:string, white:string , match_type:MatchType)=>
 export const createDirectMatchFromTargetedChallenge = (targetChallenge: TargetedChallenge) => {
   const map = {matchables : {}, matches: {}}
   map.matchables[targetChallenge.owner] = <MatchedPlayOnlineAccount> {
-    opponent: targetChallenge.targetName,
+    opponent: 'WHITE',
     opponentId: targetChallenge.target,
     owner: targetChallenge.owner,
     matchable: false,
@@ -166,9 +166,9 @@ export const createDirectMatchFromTargetedChallenge = (targetChallenge: Targeted
   }
 
   map.matchables[targetChallenge.target] = <MatchedPlayOnlineAccount> {
-    opponent: targetChallenge.ownerName,
     opponentId: targetChallenge.owner,
     owner: targetChallenge.target,
+    opponent: 'BLACK',
     matchable: false,
     matched: true,
     elo_rating: 0,
