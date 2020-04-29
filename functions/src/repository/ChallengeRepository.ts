@@ -2,7 +2,7 @@
  * @autjor Collins Magondu 26/03/2020
  */
 import * as admin from 'firebase-admin';
-import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, CreateTargetChallengeFactory, Type } from '../domain/Challenge';
+import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
 import { MatchableAccount, UserService } from '../service/AccountService';
 import { setMatchableAccount, createDirectMatchFromTargetedChallenge } from './MatchRepository';
