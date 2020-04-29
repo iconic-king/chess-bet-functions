@@ -187,6 +187,6 @@ export const canUserGetMatched = async (uid: string) => {
     const matchedAccount = <MatchedPlayOnlineAccount> matchedAccountSnapshot.val();
     return matchedAccount.matchable; 
   } else {
-    return false
+    return true
   }
 } 
