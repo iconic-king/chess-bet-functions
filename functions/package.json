@@ -27,12 +27,14 @@
     "firebase-functions": "^3.3.0",
     "firebase-queue": "^1.6.1",
     "firesql": "^2.0.2",
+    "nodemailer": "^6.4.6",
     "request": "^2.88.2",
     "sinon": "^8.1.0"
   },
   "devDependencies": {
     "@types/jest": "^24.9.0",
     "@types/node": "^13.1.8",
+    "@types/nodemailer": "^6.4.0",
     "@types/uuid": "^7.0.3",
     "firebase-functions-test": "^0.1.7",
     "jest": "^24.9.0",

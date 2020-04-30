@@ -9,6 +9,10 @@ import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
 import { getMatchableAccount } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
+import { EmailMessage, TournamentNotification } from '../domain/Notification';
+import { NotificationApi } from '../api/NotificationApi';
+
+const cors = require('cors')({origin: true});
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -185,5 +189,50 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
         console.error(error);
     }
     res.status(403).send({err: "Invalid Request"});
+}
+
+export const sendNotificationToTournamentPlayers =  async (req: Request, res: Response) => {
+    try {
+        const tournamentNotification = <TournamentNotification> req.body;
+        if(tournamentNotification) {
+            const tournament = await getTournamentByID(tournamentNotification.tournamentId);
+            if(tournament) {
+                const emails = tournament.players.map(player => {
+                    return player.email
+                });
+                console.log(emails);
+                
+                if(emails.length > 0) {
+                    const message = <EmailMessage> {
+                        from: 'Chess MVP',
+                        to: emails,
+                        text: tournamentNotification.text,
+                        subject: tournamentNotification.subject
+                    }
+
+                   const result = await new Promise((res1, rej) => {
+                        cors(req, res, async () => {
+                            try {
+                                await NotificationApi.sendMail(message);
+                                res1(true);
+                            } catch (error) {
+                                console.error(error);
+                                rej(false);
+                            }
+
+                        });
+                    });
+                    if(result){
+                        res.status(200).send(message);
+                        return;
+                    }        
+                }
+            }            
+        }
+    } catch (error) {
+        res.status(403).send({err: error});
+        return;
+    }
+    res.status(403).send({err: "Error Occured"});
 }
 
