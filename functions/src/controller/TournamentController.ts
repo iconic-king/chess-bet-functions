@@ -118,7 +118,6 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                             scheduledColor: Alliance.NOALLIANCE,
                             result: 'U', //unpaired by the system,
                             matchUrl: ''
-                
                         }
                         player.rounds.push(round);
                     }
