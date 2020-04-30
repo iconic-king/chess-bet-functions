@@ -32,7 +32,7 @@ export class Tournament {
  */
 export class PlayerSection {
     public tournamentId: undefined | string;
-    public email: string| undefined;
+    public email!: string;
     public accountId: string | undefined;
     public uid!: string;
     public id: string | undefined = "001";
