@@ -108,7 +108,16 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                             playerNumber : '0000',
                             scheduledColor: Alliance.NOALLIANCE,
                             result: 'U', //unpaired by the system,
-                            matchUrl: undefined
+                            matchUrl: ''
+                        }
+                        player.rounds.push(round);
+                    } else if (player.rounds.length < tournament.numbeOfRoundsScheduled) {
+                        // Set Unknown Bye When User Previous Rounds Were not set
+                        const round:  Round = {
+                            playerNumber : '0000',
+                            scheduledColor: Alliance.NOALLIANCE,
+                            result: 'U', //unpaired by the system,
+                            matchUrl: ''
                 
                         }
                         player.rounds.push(round);
