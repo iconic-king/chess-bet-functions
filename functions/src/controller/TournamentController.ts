@@ -2,7 +2,7 @@ import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
 import { SwissTournament, Tournament, PlayerSection, Round, CreateRoundFactory } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds, setTournamentPlayerIsActive, setTournamentLockedState } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
@@ -87,6 +87,42 @@ export const addPlayersToTournamentImplementation = async (req : Request, res: R
     }
 }
 
+export const setPlayerActiveState = async (req: Request, res: Response) => {
+    try {
+        const playerUID = req.query.playerUID;
+        const tournamentId = req.query.tournamentId;
+        const isActive = req.query.isActive;
+
+        if(playerUID && tournamentId && isActive !== undefined) {
+            const tournament = await setTournamentPlayerIsActive(playerUID, tournamentId, isActive);
+            if(tournament) {
+                res.status(200).send(tournament);  
+            }
+        }
+    } catch(error) {
+        res.status(403).send({err : error});
+        return;
+    }
+    res.status(403).send({err : "Invalid Request"});
+};
+
+export const setLockedStateOfTournament = async (req: Request, res: Response) => {
+    try {
+        const tournamentId = req.query.tournamentId;
+        const isLocked = req.query.isLocked;
+        if(isLocked !== undefined && tournamentId) {
+            const tournament = await setTournamentLockedState(tournamentId, isLocked);
+            if(tournament) {
+                res.status(200).send(tournament);  
+            }
+        }
+    } catch(error) {
+        res.status(403).send({err : error});
+        return;
+    }
+    res.status(403).send({err : "Invalid Request"});
+};
+
 export const scheduleTournamentMatchesImplementation = async (req : Request, res: Response) => {
     try {
         if(req.query.tournamentId) {
@@ -108,8 +144,16 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                             playerNumber : '0000',
                             scheduledColor: Alliance.NOALLIANCE,
                             result: 'U', //unpaired by the system,
-                            matchUrl: undefined
-                
+                            matchUrl: ''
+                        }
+                        player.rounds.push(round);
+                    } else if (player.rounds.length < tournament.numbeOfRoundsScheduled) {
+                        // Set Unknown Bye When User Previous Rounds Were not set
+                        const round:  Round = {
+                            playerNumber : '0000',
+                            scheduledColor: Alliance.NOALLIANCE,
+                            result: 'U', //unpaired by the system,
+                            matchUrl: ''
                         }
                         player.rounds.push(round);
                     }

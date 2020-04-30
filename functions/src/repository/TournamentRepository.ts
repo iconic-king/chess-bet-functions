@@ -25,8 +25,7 @@ const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDurat
        return matchableAccount;
     }
     return null;
-   }
-   
+}
 
 export const createMatchAbleAccountsForPlayers = async (players: Array<PlayerSection>, duration: number) => {
     const map =  {};
@@ -276,4 +275,27 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
         }
         throw new Error(`Tounament ${tournamentId} No Update Took Place`);
     });
+}
+
+
+export const setTournamentPlayerIsActive = async (playerUID: string, tournamentId: string, isActive: boolean) => {
+    const tournament = await getTournamentByID(tournamentId);
+    if(tournament) {
+        tournament.players.forEach(player => {
+            if(player.uid === playerUID) {
+                player.isActive = isActive;
+            }
+        });
+        return await updateTournament(tournament);
+    }
+    throw new Error('Tournament Not Found');
+}
+
+export const setTournamentLockedState = async (tournamentId: string, isLocked: boolean) => {
+    const tournament = await getTournamentByID(tournamentId);
+    if(tournament) {
+        tournament.isLocked = isLocked;
+        return await updateTournament(tournament);
+    }
+    throw new Error('Tournament Not Found');
 }
