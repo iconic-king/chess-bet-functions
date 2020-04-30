@@ -199,9 +199,7 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
             if(tournament) {
                 const emails = tournament.players.map(player => {
                     return player.email
-                });
-                console.log(emails);
-                
+                });                
                 if(emails.length > 0) {
                     const message = <EmailMessage> {
                         from: 'Chess MVP',

@@ -14,9 +14,7 @@ const gmailTransporter = nodemailer.createTransport({
 });
 export class NotificationApi {
     static sendMail (message: EmailMessage): Promise<string> {
-        message.from = `Chess MVP <${functions.config().email.address}>`;
-        console.log(message);
-        
+        message.from = `Chess MVP <${functions.config().email.address}>`;        
         return new Promise((res, rej) => {
             gmailTransporter.sendMail(message, (err, info) => {
                 if(err) {
