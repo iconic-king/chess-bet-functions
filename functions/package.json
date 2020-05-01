@@ -13,7 +13,7 @@
     "deploy-rules": "firebase deploy --only firestore:rules"
   },
   "engines": {
-    "node": "8"
+    "node": "10"
   },
   "main": "lib/index.js",
   "dependencies": {
