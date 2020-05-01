@@ -11,8 +11,34 @@ import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
 import { NotificationApi } from '../api/NotificationApi';
+import { TasksApi } from '../api/TasksApi';
 
 const cors = require('cors')({origin: true});
+
+async function sendMailToTournamentPlayers (tournament: SwissTournament, tournamentNotification: TournamentNotification) {
+    const emails = tournament.players.map(player => {
+        return player.email
+    });                
+    if(emails.length > 0) {
+        const message = <EmailMessage> {
+            from: 'Chess MVP',
+            to: emails,
+            text: tournamentNotification.text,
+            subject: tournamentNotification.subject
+        }
+        const result = await new Promise( async(res, rej) => {
+            try {
+                await NotificationApi.sendMail(message);
+                res(true);
+            } catch (error) {
+                console.error(error);
+                rej(false);
+            }
+        });
+        console.log(result);
+        return result;
+    }
+}
 
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
@@ -130,7 +156,7 @@ export const setLockedStateOfTournament = async (req: Request, res: Response) =>
 export const scheduleTournamentMatchesImplementation = async (req : Request, res: Response) => {
     try {
         if(req.query.tournamentId) {
-            const tournament = await getTournamentByID(req.query.tournamentId);
+            const tournament = await getTournamentByID(req.query.tournamentId);            
             // Change logic is more than one tournament type is possible
             if(tournament){
                 // If played rounds are equivalent to the rounds to be played do not proceed
@@ -161,17 +187,34 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         }
                         player.rounds.push(round);
                     }
-                }
+                }                
                 // Get Parings From Next User
-                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);    
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                    
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);
                         const object = await updateObject(map);
+                        const tournamentNotification = <TournamentNotification> {
+                            text: `Tournament Round ${tournament.numbeOfRoundsScheduled} login to play !! Success in your match 😊`,
+                            subject: `TOURNAMENT ROUND  ${tournament.numbeOfRoundsScheduled} IS ON !!`
+                        }
+                        cors(req, res, async () => {
+                            const result = await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                            if(result) {
+                                console.log("Messages Sent");
+                            } else {
+                                console.error("Messages Have Not Been Sent"); 
+                            }
+                        });
+                        // Schedule round after each player time * 2
+                        const roundTTL = (Date.now() / 1000)  + ((tournament.matchDuration * 60 * 2) + 180);
+                        const task = await TasksApi.createTournamentRoundSchedulingTask(tournament.id, roundTTL);
+                        console.log('Next Round Time', task.name);
                         if(swissTournament) {
                             res.status(200).send({
                                 tournament: swissTournament,
@@ -183,10 +226,11 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                 }    
             }
         }
-        res.status(403).send({err : "Tournamnet Is Invalid"});
     } catch(error) {
-        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+        res.status(403).send({err : (error) ? error : "Request Forbidden"});
+        return;
     }
+    res.status(403).send({err : "Tournamnet Is Invalid"});
 }
 
 
@@ -241,34 +285,13 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
         if(tournamentNotification) {
             const tournament = await getTournamentByID(tournamentNotification.tournamentId);
             if(tournament) {
-                const emails = tournament.players.map(player => {
-                    return player.email
-                });                
-                if(emails.length > 0) {
-                    const message = <EmailMessage> {
-                        from: 'Chess MVP',
-                        to: emails,
-                        text: tournamentNotification.text,
-                        subject: tournamentNotification.subject
-                    }
-
-                   const result = await new Promise((res1, rej) => {
-                        cors(req, res, async () => {
-                            try {
-                                await NotificationApi.sendMail(message);
-                                res1(true);
-                            } catch (error) {
-                                console.error(error);
-                                rej(false);
-                            }
-
-                        });
-                    });
-                    if(result){
-                        res.status(200).send(message);
-                        return;
-                    }        
-                }
+                cors(req, res, async ()=> {
+                   const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                   if(result) {
+                    res.status(200).send(tournamentNotification);
+                    return;
+                   }
+                });
             }            
         }
     } catch (error) {

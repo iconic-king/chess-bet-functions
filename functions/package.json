@@ -19,6 +19,7 @@
   "dependencies": {
     "@firebase/app": "^0.5.2",
     "@google-cloud/storage": "^3.3.0",
+    "@google-cloud/tasks": "^2.0.0",
     "child-process-promise": "^2.2.1",
     "cors": "^2.8.5",
     "express": "^4.17.1",
