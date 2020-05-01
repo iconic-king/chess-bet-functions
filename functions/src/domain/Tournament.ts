@@ -60,7 +60,7 @@ export interface Round {
     playerNumber: string;
     scheduledColor: string | undefined;
     result: string;
-    matchUrl: string | undefined;
+    matchUrl: string;
 }
 
 export function CreateRoundFactory(playerNumber: string, scheduledColor: string, result: string, matchUrl) :Round {

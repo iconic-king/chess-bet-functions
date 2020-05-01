@@ -26,8 +26,7 @@ async function sendMailToTournamentPlayers (tournament: SwissTournament, tournam
             text: tournamentNotification.text,
             subject: tournamentNotification.subject
         }
-
-       const result = await new Promise( async(res, rej) => {
+        const result = await new Promise( async(res, rej) => {
             try {
                 await NotificationApi.sendMail(message);
                 res(true);
@@ -36,6 +35,7 @@ async function sendMailToTournamentPlayers (tournament: SwissTournament, tournam
                 rej(false);
             }
         });
+        console.log(result);
         return result;
     }
 }
@@ -156,7 +156,7 @@ export const setLockedStateOfTournament = async (req: Request, res: Response) =>
 export const scheduleTournamentMatchesImplementation = async (req : Request, res: Response) => {
     try {
         if(req.query.tournamentId) {
-            const tournament = await getTournamentByID(req.query.tournamentId);
+            const tournament = await getTournamentByID(req.query.tournamentId);            
             // Change logic is more than one tournament type is possible
             if(tournament){
                 // If played rounds are equivalent to the rounds to be played do not proceed
@@ -187,13 +187,14 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         }
                         player.rounds.push(round);
                     }
-                }
+                }                
                 // Get Parings From Next User
-                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);    
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                    
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);
@@ -202,16 +203,18 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                             text: `Tournament Round ${tournament.numbeOfRoundsScheduled} login to play !! Success in your match 😊`,
                             subject: `TOURNAMENT ROUND  ${tournament.numbeOfRoundsScheduled} IS ON !!`
                         }
-                        const result = await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                        cors(req, res, async () => {
+                            const result = await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                            if(result) {
+                                console.log("Messages Sent");
+                            } else {
+                                console.error("Messages Have Not Been Sent"); 
+                            }
+                        });
                         // Schedule round after each player time * 2
                         const roundTTL = (Date.now() / 1000)  + ((tournament.matchDuration * 60 * 2) + 180);
                         const task = await TasksApi.createTournamentRoundSchedulingTask(tournament.id, roundTTL);
                         console.log('Next Round Time', task.name);
-                        if(result) {
-                            console.log("Messages Sent");
-                        } else {
-                            console.error("Messages Have Not Been Sent"); 
-                        }
                         if(swissTournament) {
                             res.status(200).send({
                                 tournament: swissTournament,
@@ -223,10 +226,11 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                 }    
             }
         }
-        res.status(403).send({err : "Tournamnet Is Invalid"});
     } catch(error) {
-        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+        res.status(403).send({err : (error) ? error : "Request Forbidden"});
+        return;
     }
+    res.status(403).send({err : "Tournamnet Is Invalid"});
 }
 
 

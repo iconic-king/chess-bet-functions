@@ -191,7 +191,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
                 playerNumber : '0000',
                 scheduledColor: Alliance.NOALLIANCE,
                 result: 'Z',
-                matchUrl: undefined
+                matchUrl: ''
             }
             tournament.players[pair.whitePlayer - 1].rounds.push(round);
         } else if (pair.blackPlayer && pair.whitePlayer) {
