@@ -9,7 +9,7 @@ export class Tournament {
     public matchDuration: number = 5; // Default tournament match duration
     public timeStamp: number | undefined;
     public authorUid: string | undefined;
-    public id: string | undefined;
+    public id!: string;
     public name!: string;
     public city!: string;
     public federation!: string;

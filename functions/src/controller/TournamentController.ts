@@ -11,6 +11,7 @@ import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
 import { NotificationApi } from '../api/NotificationApi';
+import { TasksApi } from '../api/TasksApi';
 
 const cors = require('cors')({origin: true});
 
@@ -202,6 +203,10 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                             subject: `TOURNAMENT ROUND  ${tournament.numbeOfRoundsScheduled} IS ON !!`
                         }
                         const result = await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                        // Schedule round after each player time * 2
+                        const roundTTL = (Date.now() / 1000)  + ((tournament.matchDuration * 60 * 2) + 180);
+                        const task = await TasksApi.createTournamentRoundSchedulingTask(tournament.id, roundTTL);
+                        console.log('Next Round Time', task.name);
                         if(result) {
                             console.log("Messages Sent");
                         } else {
