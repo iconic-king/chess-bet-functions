@@ -253,10 +253,8 @@ app.post('/tournament/addPlayers', (req, res) =>  {
 });
 
 app.post('/tournament/schedule', (req, res) =>  {
-    verifyToken(req, res, () => { 
     // tslint:disable-next-line: no-floating-promises
     scheduleTournamentMatchesImplementation(req, res);
-    });
 });
 
 app.post('/tournament/evaluateTounamentMatch', (req, res) => {

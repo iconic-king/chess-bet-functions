@@ -14,6 +14,31 @@ import { NotificationApi } from '../api/NotificationApi';
 
 const cors = require('cors')({origin: true});
 
+async function sendMailToTournamentPlayers (tournament: SwissTournament, tournamentNotification: TournamentNotification) {
+    const emails = tournament.players.map(player => {
+        return player.email
+    });                
+    if(emails.length > 0) {
+        const message = <EmailMessage> {
+            from: 'Chess MVP',
+            to: emails,
+            text: tournamentNotification.text,
+            subject: tournamentNotification.subject
+        }
+
+       const result = await new Promise( async(res, rej) => {
+            try {
+                await NotificationApi.sendMail(message);
+                res(true);
+            } catch (error) {
+                console.error(error);
+                rej(false);
+            }
+        });
+        return result;
+    }
+}
+
 export const validateTournamentImplementation = async (req : Request, res: Response) => {
     try  {
         const tournament = <Tournament> req.body;
@@ -172,6 +197,16 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);
                         const object = await updateObject(map);
+                        const tournamentNotification = <TournamentNotification> {
+                            text: `Tournament Round ${tournament.numbeOfRoundsScheduled} login to play !! Success in your match 😊`,
+                            subject: `TOURNAMENT ROUND  ${tournament.numbeOfRoundsScheduled} IS ON !!`
+                        }
+                        const result = await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                        if(result) {
+                            console.log("Messages Sent");
+                        } else {
+                            console.error("Messages Have Not Been Sent"); 
+                        }
                         if(swissTournament) {
                             res.status(200).send({
                                 tournament: swissTournament,
@@ -241,34 +276,13 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
         if(tournamentNotification) {
             const tournament = await getTournamentByID(tournamentNotification.tournamentId);
             if(tournament) {
-                const emails = tournament.players.map(player => {
-                    return player.email
-                });                
-                if(emails.length > 0) {
-                    const message = <EmailMessage> {
-                        from: 'Chess MVP',
-                        to: emails,
-                        text: tournamentNotification.text,
-                        subject: tournamentNotification.subject
-                    }
-
-                   const result = await new Promise((res1, rej) => {
-                        cors(req, res, async () => {
-                            try {
-                                await NotificationApi.sendMail(message);
-                                res1(true);
-                            } catch (error) {
-                                console.error(error);
-                                rej(false);
-                            }
-
-                        });
-                    });
-                    if(result){
-                        res.status(200).send(message);
-                        return;
-                    }        
-                }
+                cors(req, res, async ()=> {
+                   const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                   if(result) {
+                    res.status(200).send(tournamentNotification);
+                    return;
+                   }
+                });
             }            
         }
     } catch (error) {
