@@ -15,7 +15,7 @@ export class TasksApi {
         const task = {
             httpRequest: {
                 httpMethod: 'POST',
-                url: `${functions.config().tournament.callbackurl}/tournament/schedule?tournamentId=${tournamentId}`,
+                url: `${functions.config().tournament.callbackurl}?tournamentId=${tournamentId}`,
                 body: Buffer.from(JSON.stringify({})).toString('base64'),
                 headers: {
                     'Content-Type': 'application/json',
