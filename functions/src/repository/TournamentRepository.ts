@@ -178,8 +178,8 @@ function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTourname
 export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: SwissTournament) => {
     let isMatchMade = false;
     const map = {
-        matchables: {},
-        matches: {}
+        tournament_matchables: {},
+        tournament_matches: {}
     }
     console.log(`${tournament.id}  has ${paringOutput.pairs} for round ${tournament.numbeOfRoundsScheduled}`);
     for(const pair of paringOutput.pairs) {
@@ -199,13 +199,13 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             const whitePlayerIndex = pair.whitePlayer - 1;
             const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
             const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
-            map.matches[matchId] = match;
+            map.tournament_matches[matchId] = match;
             const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
             if(accounts.length  !== 2) {
                 throw new Error("Accounts Must Be Two");
             }
             for(const account of accounts) {
-                    map.matchables[account.owner] = account;
+                    map.tournament_matchables[account.owner] = account;
             }
             isMatchMade = true;
             tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
