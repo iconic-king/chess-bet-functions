@@ -6,7 +6,7 @@ import { createSwissTournament, addPlayersToTournament, getTournamentByID, match
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
-import { getMatchableAccount, removeTournamentMatch, getTournamentMatchableAccount } from '../repository/MatchRepository';
+import { removeTournamentMatch, getTournamentMatchableAccount } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
