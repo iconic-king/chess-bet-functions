@@ -9,6 +9,9 @@ const realtimeDatabase = admin.database();
 
 const matchableReference = realtimeDatabase.ref('matchables');
 export const matchesReference = realtimeDatabase.ref('matches');
+
+const tournamentMatches = realtimeDatabase.ref('tournament_matches')
+const tournamentMatchables = realtimeDatabase.ref('tournament_matchables')
 // const accountCollection = firestoreDatabase.collection("accounts");
 
 export const setMatchableAccount =  (matchableAccount: MatchableAccount) => {
@@ -55,6 +58,23 @@ export const removeMatch = (matchId: string) => {
 
 export const removeMatchable = (matchableId: string) => {
   return matchableReference.child((matchableId)).remove();
+}
+
+export const removeTournamentMatchable = (matchableId: string) => {
+  return tournamentMatchables.child(matchableId).remove();
+}
+
+export const getTournamentMatchableAccount = (matchableId: string) => {
+  return tournamentMatchables.child(matchableId).once('value');
+}
+
+// Removes tournament match
+export const removeTournamentMatch = (matchId: string) => {
+  return tournamentMatches.child(matchId).remove();
+}
+
+export const getTournamentMatch = (matchId: string) => {
+  return tournamentMatches.child(matchId).once('value');
 }
 
 // TODO Add duration and date of match creaton

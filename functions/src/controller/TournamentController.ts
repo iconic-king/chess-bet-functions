@@ -6,7 +6,7 @@ import { createSwissTournament, addPlayersToTournament, getTournamentByID, match
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
-import { getMatchableAccount } from '../repository/MatchRepository';
+import { getMatchableAccount, removeTournamentMatch, getTournamentMatchableAccount } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
@@ -239,8 +239,8 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
     const tournamentId = req.query.tournamentId;
     try  {
         if(matchResult && tournamentId) {
-            const gainAccountSnapshot = await getMatchableAccount(matchResult.gain);
-            const lossAccountSnapshot = await getMatchableAccount(matchResult.loss);            
+            const gainAccountSnapshot = await getTournamentMatchableAccount(matchResult.gain);
+            const lossAccountSnapshot = await getTournamentMatchableAccount(matchResult.loss);            
             if(lossAccountSnapshot.exists() && gainAccountSnapshot.exists()) {
                 const gainAccount = <MatchedPlayOnlineTournamentAccount> gainAccountSnapshot.val();
                 const lossAccount = <MatchedPlayOnlineTournamentAccount> lossAccountSnapshot.val();
@@ -265,6 +265,8 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                     if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
                         tournament = <SwissTournament> tournament;
                         tournament = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                        // Remove Tournament Match After Evaluation
+                        await removeTournamentMatch(matchResult.matchId);
                         if(tournament.name) {
                             res.status(200).send(tournament);
                             return;
