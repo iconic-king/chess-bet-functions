@@ -9,7 +9,7 @@ export class Tournament {
     public matchDuration: number = 5; // Default tournament match duration
     public timeStamp: number | undefined;
     public authorUid: string | undefined;
-    public id: string | undefined;
+    public id!: string;
     public name!: string;
     public city!: string;
     public federation!: string;
@@ -32,7 +32,7 @@ export class Tournament {
  */
 export class PlayerSection {
     public tournamentId: undefined | string;
-    public email: string| undefined;
+    public email!: string;
     public accountId: string | undefined;
     public uid!: string;
     public id: string | undefined = "001";
@@ -60,7 +60,7 @@ export interface Round {
     playerNumber: string;
     scheduledColor: string | undefined;
     result: string;
-    matchUrl: string | undefined;
+    matchUrl: string;
 }
 
 export function CreateRoundFactory(playerNumber: string, scheduledColor: string, result: string, matchUrl) :Round {

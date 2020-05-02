@@ -25,8 +25,7 @@ const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDurat
        return matchableAccount;
     }
     return null;
-   }
-   
+}
 
 export const createMatchAbleAccountsForPlayers = async (players: Array<PlayerSection>, duration: number) => {
     const map =  {};
@@ -179,8 +178,8 @@ function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTourname
 export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: SwissTournament) => {
     let isMatchMade = false;
     const map = {
-        matchables: {},
-        matches: {}
+        tournament_matchables: {},
+        tournament_matches: {}
     }
     console.log(`${tournament.id}  has ${paringOutput.pairs} for round ${tournament.numbeOfRoundsScheduled}`);
     for(const pair of paringOutput.pairs) {
@@ -192,7 +191,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
                 playerNumber : '0000',
                 scheduledColor: Alliance.NOALLIANCE,
                 result: 'Z',
-                matchUrl: undefined
+                matchUrl: ''
             }
             tournament.players[pair.whitePlayer - 1].rounds.push(round);
         } else if (pair.blackPlayer && pair.whitePlayer) {
@@ -200,13 +199,13 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             const whitePlayerIndex = pair.whitePlayer - 1;
             const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
             const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
-            map.matches[matchId] = match;
+            map.tournament_matches[matchId] = match;
             const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
             if(accounts.length  !== 2) {
                 throw new Error("Accounts Must Be Two");
             }
             for(const account of accounts) {
-                    map.matchables[account.owner] = account;
+                    map.tournament_matchables[account.owner] = account;
             }
             isMatchMade = true;
             tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
@@ -276,4 +275,27 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
         }
         throw new Error(`Tounament ${tournamentId} No Update Took Place`);
     });
+}
+
+
+export const setTournamentPlayerIsActive = async (playerUID: string, tournamentId: string, isActive: boolean) => {
+    const tournament = await getTournamentByID(tournamentId);
+    if(tournament) {
+        tournament.players.forEach(player => {
+            if(player.uid === playerUID) {
+                player.isActive = isActive;
+            }
+        });
+        return await updateTournament(tournament);
+    }
+    throw new Error('Tournament Not Found');
+}
+
+export const setTournamentLockedState = async (tournamentId: string, isLocked: boolean) => {
+    const tournament = await getTournamentByID(tournamentId);
+    if(tournament) {
+        tournament.isLocked = isLocked;
+        return await updateTournament(tournament);
+    }
+    throw new Error('Tournament Not Found');
 }
