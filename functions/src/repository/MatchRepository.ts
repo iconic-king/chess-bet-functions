@@ -12,7 +12,6 @@ export const matchesReference = realtimeDatabase.ref('matches');
 
 const tournamentMatches = realtimeDatabase.ref('tournament_matches')
 const tournamentMatchables = realtimeDatabase.ref('tournament_matchables')
-// const accountCollection = firestoreDatabase.collection("accounts");
 
 export const setMatchableAccount =  (matchableAccount: MatchableAccount) => {
     let matchable:MatchableAccount;
