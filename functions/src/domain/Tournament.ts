@@ -5,6 +5,21 @@
 
 import { ParingAlgorithm } from "./ParingAlgorithm";
 
+export enum TournamentType {
+    PAID = 'PAID',
+    FREE = 'FREE'
+}
+
+export enum Currency {
+    KSH = 'KSH',
+    DOLLAR = 'DOLLAR'
+}
+
+export interface Amount {
+    currency: Currency,
+    amount: number
+}
+
 export class Tournament {
     public matchDuration: number = 5; // Default tournament match duration
     public timeStamp: number | undefined;
@@ -24,6 +39,8 @@ export class Tournament {
     public allottedTimes!: string;
     public numbeOfRoundsScheduled!: number;
     public rounds!: number;
+    public type !: TournamentType;
+    public amount!: Amount;
     public isLocked = false;
 }
 
