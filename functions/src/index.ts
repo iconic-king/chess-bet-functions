@@ -259,8 +259,6 @@ app.post('/tournament/addPlayers', (req, res) =>  {
     addPlayerToTournamentImplementation(req, res);
 });
 
-
-
 app.post('/tournament/schedule', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     scheduleTournamentMatchesImplementation(req, res);
