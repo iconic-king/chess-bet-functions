@@ -2,13 +2,17 @@
  * @autjor Collins Magondu 04/20/2020
  */
 import * as admin from 'firebase-admin';
-import { SwissTournament, PlayerSection, Tournament, Round } from '../domain/Tournament';
+import { SwissTournament, PlayerSection, Tournament, Round, TournamentType } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
 import { MatchablePlayOnlineTournamentAccount, MatchedPlayOnlineAccount, MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 import { ParingOutput, Pair } from '../domain/ParingOutput';
 import { createMatchedPlayTournamentAccount, createMatch } from './MatchRepository';
 import { Alliance } from '../domain/Alliance';
+import { DirectTransactionDTO } from '../domain/DirectTransactionDTO';
+import { getServiceAccountByUserId } from './PaymentsRepository';
+import { PaymentsApi } from '../api/PaymentsApi';
+import { ProductAccount } from '../domain/ServiceAccount';
 
 const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
@@ -120,6 +124,59 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
         return null;
     });
 }
+
+export const addPlayerToTournament = async (tournamentId: string ,player: PlayerSection) => {
+    const tournamentRef = await firestoreDatabase.collection(tournamentCollection).doc(tournamentId).get();
+    return firestoreDatabase.runTransaction(async (_transaction) => {
+        try {
+            if(tournamentRef.exists) {
+                const tournament = <Tournament> tournamentRef.data();
+                // No Player Should Be Added if no data is provided.
+                if(tournament.isLocked) {
+                    return  null;
+                }
+                if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
+                    const swissTournament = <SwissTournament> tournamentRef.data();
+                    if (!swissTournament.players) {
+                        swissTournament.players = new Array();
+                    }
+                    player.rankNumber = swissTournament.players.length + 1;
+                    player.tournamentId = swissTournament.id;
+                    player.isActive = true;
+
+                    if (swissTournament.type === TournamentType.PAID) {
+                        // PAID TOURNAMENT EXTRA LOGIC
+                        const account = await getServiceAccountByUserId(player.uid);
+
+                        if(!account) {
+                            throw new Error('No Account Found For User');
+                        }
+
+                        const transaction = new DirectTransactionDTO();
+                        transaction.accountId = account.accountId;
+                        transaction.amount = swissTournament.amount;
+                        const productAccount = <ProductAccount> await PaymentsApi.makeDirectTransaction(transaction);
+
+                        if(productAccount.id){
+                            console.log(productAccount);
+                            swissTournament.players.push(player);
+                        } else {
+                            throw new Error('User has inssuficient funds');
+                        }
+                    } else {
+                        swissTournament.players.push(player);
+                    }
+                    _transaction.update(tournamentRef.ref, swissTournament);
+                    return swissTournament;
+                }
+            }
+        } catch(error) {
+            console.error(error);
+        }
+        return null;
+    });
+}
+
 // Invoked During Tournament Creation
 export const createMatchableAccountsFromTournament = async (tournament: Tournament) => {
     let map = {}
