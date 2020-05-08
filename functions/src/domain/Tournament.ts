@@ -63,7 +63,7 @@ export class PlayerSection {
     public birthDate: string | undefined;
     public points: number = 0;
     public rank: number = 0;
-    public isActive: boolean  = true; // Set false when user is removed from tournament
+    public isActive!: boolean;
     public rounds: Array<Round> = new Array();
 
     addRound(round: Round) {

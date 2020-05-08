@@ -121,12 +121,13 @@ export const setPlayerActiveState = async (req: Request, res: Response) => {
     try {
         const playerUID = req.query.playerUID;
         const tournamentId = req.query.tournamentId;
-        const isActive = req.query.isActive;
 
-        if(playerUID && tournamentId && isActive !== undefined) {
+        if(playerUID && tournamentId && req.query.isActive !== undefined) {
+            const isActive = (req.query.isActive === 'true');
             const tournament = await setTournamentPlayerIsActive(playerUID, tournamentId, isActive);
             if(tournament) {
                 res.status(200).send(tournament);  
+                return;
             }
         }
     } catch(error) {

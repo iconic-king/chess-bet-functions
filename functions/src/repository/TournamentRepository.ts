@@ -99,6 +99,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                             if(player.uid && player.email) {
                                 player.rankNumber = counter;
                                 player.tournamentId = swissTournament.id;
+                                player.isActive = true;
                                 swissTournament.players.push(player);
                                 counter++;
                             } else {
@@ -109,8 +110,6 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                             return null;
                         }
                     }
-                    // Add Matchable Accounts For New Players
-                    await createMatchAbleAccountsForPlayers(players, swissTournament.matchDuration);
                     _transaction.update(tournamentRef.ref, swissTournament);
                     return swissTournament;
                 }
@@ -283,7 +282,7 @@ export const setTournamentPlayerIsActive = async (playerUID: string, tournamentI
     if(tournament) {
         tournament.players.forEach(player => {
             if(player.uid === playerUID) {
-                player.isActive = isActive;
+                player.isActive = isActive; 
             }
         });
         return await updateTournament(tournament);
