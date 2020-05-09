@@ -12,7 +12,7 @@ export enum TournamentType {
 
 export enum Currency {
     KSH = 'KSH',
-    DOLLAR = 'DOLLAR'
+    USD = 'USD'
 }
 
 export interface Amount {

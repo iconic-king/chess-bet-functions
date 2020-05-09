@@ -253,8 +253,7 @@ app.post('/tournament/addPlayers', (req, res) =>  {
     });
 });
 
-
-app.post('/tournament/addPlayers', (req, res) =>  {
+app.post('/tournament/addPlayer', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     addPlayerToTournamentImplementation(req, res);
 });
