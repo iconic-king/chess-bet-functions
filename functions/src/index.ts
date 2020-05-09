@@ -31,7 +31,8 @@ import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
-import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers } from './controller/TournamentController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation } from './controller/TournamentController';
+import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -252,6 +253,12 @@ app.post('/tournament/addPlayers', (req, res) =>  {
     });
 });
 
+
+app.post('/tournament/addPlayers', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    addPlayerToTournamentImplementation(req, res);
+});
+
 app.post('/tournament/schedule', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     scheduleTournamentMatchesImplementation(req, res);
@@ -280,6 +287,26 @@ app.post('/tournament/player/isActive', (req, res) =>  {
 });
 
 // ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
+
+// ----------------------------- PAYEMENTS SERVCIE START ------------------------------------------------
+
+app.post('/payments/createAccount', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    createServiceAccountImplementation(req, res);
+});
+
+app.get('/payments/serviceAccount', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getServiceAccountImplementation(req, res);
+});
+
+
+app.post('/daraja/save', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    initiateDarajaPaymentImplementation(req, res);
+})
+
+// ----------------------------- PAYEMENTS SERVCIE END ------------------------------------------------
 
 // ----------------------------- STORAGE FUNCTIONS START  ----------------------------------------------
 export const resizeProfilePhotos = functions.storage.object().onFinalize(event => {

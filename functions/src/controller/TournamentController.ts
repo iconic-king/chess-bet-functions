@@ -2,7 +2,7 @@ import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
 import { SwissTournament, Tournament, PlayerSection, Round, CreateRoundFactory } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds, setTournamentPlayerIsActive, setTournamentLockedState } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds, setTournamentPlayerIsActive, setTournamentLockedState, addPlayerToTournament } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
@@ -102,11 +102,35 @@ export const createTournamentImplementation = async (req : Request, res: Respons
     }
 }
 
+/**
+ * Allow an array players in a tournament (FREE TOURNAMENTS ONLY)
+ * @param req 
+ * @param res 
+ */
 export const addPlayersToTournamentImplementation = async (req : Request, res: Response) => {
     const players =  <Array<PlayerSection>> req.body;
     console.log(players[0]);
     try {
         const transaction = await addPlayersToTournament(req.query.tournamentId, players);
+        if(transaction) {
+            res.status(200).send(transaction);  
+        } else {
+            res.status(403).send({err : "Request Forbidden"})
+        }
+    } catch(error) {
+        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+    }
+}
+
+/**
+ * Allow one to be added as a player in a tournament
+ * @param req 
+ * @param res 
+ */
+export const addPlayerToTournamentImplementation = async (req : Request, res: Response) => {
+    const player =  <PlayerSection> req.body;
+    try {
+        const transaction = await addPlayerToTournament(req.query.tournamentId, player);
         if(transaction) {
             res.status(200).send(transaction);  
         } else {
