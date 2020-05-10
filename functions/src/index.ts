@@ -33,6 +33,7 @@ import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation } from './controller/TournamentController';
 import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
+import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -286,6 +287,22 @@ app.post('/tournament/player/isActive', (req, res) =>  {
 });
 
 // ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
+
+
+// ----------------------------- VERIFICATION SERVICE START -------------------------------------------
+
+app.post('/verify/twilio/sendCode', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    sendTwilioVerificationCode(req, res);
+});
+
+app.post('/verify/twilio/verifyCode', (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    verifyTwilioVerificationCode(req, res);
+});
+
+// ----------------------------- VERIFICATION SERVICE END -------------------------------------------
+
 
 // ----------------------------- PAYEMENTS SERVCIE START ------------------------------------------------
 

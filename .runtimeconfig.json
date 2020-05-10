@@ -1,10 +1,12 @@
 {
   "payments": {
-    "link": "https://payments-service-dot-iconic-king-dev.uc.r.appspot.com",
-    "serviceid": "1"
+    "serviceid": "1",
+    "link": "https://payments-service-dot-iconic-king-dev.uc.r.appspot.com"
   },
-  "tournament": {
-    "callbackurl": "https://us-central1-chess-bet-test.cloudfunctions.net/function/tournament/schedule"
+  "twilio": {
+    "accountsid": "ACf0894a783418b76852fd5e3251bfa4f6",
+    "authtoken": "0621f73bb51c91c7d9b6ff186b4a62e9",
+    "servicesid": "VA2c6f510861804cc13a4c8598ee17fdc6"
   },
   "email": {
     "address": "chessmvpinfo@gmail.com",
@@ -12,5 +14,8 @@
   },
   "tps": {
     "link": "https://chess-bet-tps-dot-chess-bet-test.appspot.com"
+  },
+  "tournament": {
+    "callbackurl": "https://us-central1-chess-bet-test.cloudfunctions.net/function/tournament/schedule"
   }
 }
