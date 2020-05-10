@@ -8,7 +8,6 @@ export const sendTwilioVerificationCode = async (req: Request, res: Response) =>
     const verifiactionDTO  = <TwiloVerificationDTO> req.body;
     try {
         if(verifiactionDTO.channel && verifiactionDTO.phoneNumber) {
-            console.log(functions.config().twilio);
             const response = <TwiloVerificationService> await client.verify.services(functions.config().twilio.servicesid)
             .verifications.create({to: verifiactionDTO.phoneNumber, channel: verifiactionDTO.channel});
             res.status(200).send(response);
