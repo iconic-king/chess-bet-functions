@@ -198,28 +198,18 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         const round:  Round = {
                             playerNumber : '0000',
                             scheduledColor: Alliance.NOALLIANCE,
-                            result: 'U', //unpaired by the system,
-                            matchUrl: ''
-                        }
-                        player.rounds.push(round);
-                    } else if (player.rounds.length < tournament.numbeOfRoundsScheduled) {
-                        // Set Unknown Bye When User Previous Rounds Were not set
-                        const round:  Round = {
-                            playerNumber : '0000',
-                            scheduledColor: Alliance.NOALLIANCE,
-                            result: 'U', //unpaired by the system,
+                            result: '-', //unpaired by the system,
                             matchUrl: ''
                         }
                         player.rounds.push(round);
                     }
-                }                
+                }
                 // Get Parings From Next User
-                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);    
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);  
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
-                    
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);

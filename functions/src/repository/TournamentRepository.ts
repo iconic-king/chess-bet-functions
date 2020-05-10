@@ -241,7 +241,6 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
     for(const pair of paringOutput.pairs) {
         try {
         /// We have an odd number of players
-        console.log(pair);
         if(pair.blackPlayer === 0 && pair.whitePlayer) {
             const round:  Round = {
                 playerNumber : '0000',
@@ -263,6 +262,21 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             for(const account of accounts) {
                     map.tournament_matchables[account.owner] = account;
             }
+            const playerOneRound :Round = {
+                playerNumber : tournament.players[whitePlayerIndex].rankNumber.toString(),
+                scheduledColor: Alliance.BLACK,
+                result: '-',
+                matchUrl: ''
+            }
+
+            const playerOneTwo :Round = {
+                playerNumber : tournament.players[blackPlayerIndex].rankNumber.toString(),
+                scheduledColor: Alliance.WHITE,
+                result: '-',
+                matchUrl: ''
+            }
+            tournament.players[blackPlayerIndex].rounds.push(playerOneRound);
+            tournament.players[whitePlayerIndex].rounds.push(playerOneTwo);
             isMatchMade = true;
             tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
             }
@@ -288,7 +302,9 @@ function updatePlayerRound(player: PlayerSection, round: Round){
     } else if  (round.result === 'D' || round.result === '=') {
         player.points = (player.points) ? player.points + 0.5 :  0.5;
     }
-    player.rounds.push(round);
+    const size = player.rounds.length;
+    player.rounds[size -1].matchUrl = round.matchUrl;
+    player.rounds[size -1].result = round.result;
 } 
 
 /**
