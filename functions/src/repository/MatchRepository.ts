@@ -126,7 +126,7 @@ export const getMatch = (match_id:string) => {
 export const createMatchedPlayTournamentAccount = (player: PlayerSection, opponent: PlayerSection, matchId: string, 
   duration: number, alliance: Alliance, tournament: SwissTournament): MatchedPlayOnlineTournamentAccount | null => {
     if(opponent.name && player.uid && opponent.uid) {
-      const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE, true, opponent.name, matchId, duration, opponent.uid);
+      const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE, true, (alliance === Alliance.WHITE) ? 'BLACK': 'WHITE', matchId, duration, opponent.uid);
       account.email = player.email;
       account.owner = player.uid;
       account.result = '0'
