@@ -14,7 +14,7 @@ export const sendTwilioVerificationCode = async (req: Request, res: Response) =>
             return;
         }
     } catch(error)  {
-        console.log(error);
+        console.error(error);
         res.status(403).send({err : error});
         return;
     }
@@ -31,7 +31,7 @@ export const verifyTwilioVerificationCode = async (req: Request, res: Response) 
             return;
         }
     } catch(error)  {
-        console.log(error);
+        console.error(error);
         res.status(403).send({err : error});
         return;
     }
