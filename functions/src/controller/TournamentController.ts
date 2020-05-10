@@ -65,7 +65,7 @@ export const getTournamentParingsImplementation = async (req : Request, res: Res
         } else {
             res.status(403).send({
                 err: `No Tournament Of Type ${tournament.paringAlgorithm}`
-            }) 
+            })
         }
     } catch(error) {
         res.status(403).send(error)
@@ -312,13 +312,19 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
         if(tournamentNotification) {
             const tournament = await getTournamentByID(tournamentNotification.tournamentId);
             if(tournament) {
-                cors(req, res, async ()=> {
-                   const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
-                   if(result) {
-                    res.status(200).send(tournamentNotification);
-                    return;
-                   }
+                const promise = new Promise((resolve, reject) => {
+                    cors(req, res, async ()=> {
+                        const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                        if(result) {
+                         resolve(result);
+                        } else {
+                         reject('Notification Not Sent');
+                        }
+                     });
                 });
+                await promise;
+                res.status(200).send(tournamentNotification);
+                return;
             }            
         }
     } catch (error) {
