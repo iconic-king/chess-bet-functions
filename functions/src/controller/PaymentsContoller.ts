@@ -39,6 +39,9 @@ export const getServiceAccountImplementation = async (req: Request, res: Respons
                 const account = <ProductAccount> await PaymentsApi.getAccount(servcieAccount);
                 res.status(200).send(account);
                 return;
+            } else {
+                res.status(404).send({err : 'Not Found'});
+                return;
             }
         }
     } catch(error) {
