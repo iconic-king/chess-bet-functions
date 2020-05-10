@@ -278,7 +278,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             tournament.players[blackPlayerIndex].rounds.push(playerOneRound);
             tournament.players[whitePlayerIndex].rounds.push(playerOneTwo);
             isMatchMade = true;
-            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
+            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled + 1 : 1;
             }
         } catch (error) {
             console.error(error);
