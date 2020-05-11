@@ -31,7 +31,7 @@ export const createUserAccount =  (uid:string) => {
     owner : uid,
     matches:[],
     last_match_amount : {
-      currency: 'KSH',
+      currency: 'KES',
       amount: 0.00
     },
     last_match_duration: 0, // Minutes

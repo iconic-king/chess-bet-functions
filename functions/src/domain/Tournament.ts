@@ -11,7 +11,7 @@ export enum TournamentType {
 }
 
 export enum Currency {
-    KSH = 'KSH',
+    KES = 'KES',
     USD = 'USD'
 }
 

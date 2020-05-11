@@ -18,6 +18,7 @@ const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
 
 const tournamentCollection = "tournaments";
+import uuidv4 from 'uuid/v4';
 
 const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDuration: number): MatchablePlayOnlineTournamentAccount | null => {
     if(player.uid && player.email) {
@@ -144,7 +145,8 @@ export const addPlayerToTournament = async (tournamentId: string ,player: Player
                     player.tournamentId = swissTournament.id;
                     player.isActive = true;
 
-                    if (swissTournament.type === TournamentType.PAID) {
+                    if (swissTournament.typeOfTournament === TournamentType.PAID) {
+                        
                         // PAID TOURNAMENT EXTRA LOGIC
                         const account = await getServiceAccountByUserId(player.uid);
 
@@ -155,8 +157,9 @@ export const addPlayerToTournament = async (tournamentId: string ,player: Player
                         const transaction = new DirectTransactionDTO();
                         transaction.accountId = account.accountId;
                         transaction.amount = swissTournament.amount;
+                        transaction.ref = uuidv4();
                         const productAccount = <ProductAccount> await PaymentsApi.makeDirectTransaction(transaction);
-
+                        console.log(productAccount);
                         if(productAccount.id){
                             console.log(productAccount);
                             swissTournament.players.push(player);
@@ -278,7 +281,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             tournament.players[blackPlayerIndex].rounds.push(playerOneRound);
             tournament.players[whitePlayerIndex].rounds.push(playerOneTwo);
             isMatchMade = true;
-            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled + 1 : 1;
+            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled + 1          : 1;
             }
         } catch (error) {
             console.error(error);
