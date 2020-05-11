@@ -6,7 +6,7 @@ import { createSwissTournament, addPlayersToTournament, getTournamentByID, match
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
-import { removeTournamentMatch, getTournamentMatchableAccount } from '../repository/MatchRepository';
+import { removeTournamentMatch, getTournamentMatchableAccount, removeTournamentMatchable } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
@@ -285,6 +285,8 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                         tournament = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
                         // Remove Tournament Match After Evaluation
                         await removeTournamentMatch(matchResult.matchId);
+                        await removeTournamentMatchable(gainAccount.owner);
+                        await removeTournamentMatchable(lossAccount.owner);
                         if(tournament.name) {
                             res.status(200).send(tournament);
                             return;
