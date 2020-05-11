@@ -209,8 +209,10 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                 const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);                  
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
-                    // Validate the tournament state after parings have been added                    
+                    // Validate the tournament state after parings have been added
+                    console.log(JSON.stringify(tournament));
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                    console.log(response);
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);

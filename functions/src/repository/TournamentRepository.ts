@@ -330,14 +330,14 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
                 const swiss = <SwissTournament> doc.data();
                 const playerOne = swiss.players[playerRankOne - 1];
                 // Rounds Are Not Updated Yet
-                if(playerOne.rounds.length < tournament.numbeOfRoundsScheduled) {
+                if(playerOne.rounds.length === tournament.numbeOfRoundsScheduled) {
                     updatePlayerRound(playerOne, roundOne);
                     isUpdated = true;
                 }
                 isUpdated = false;
                 const playerTwo = swiss.players[playerRankTwo - 1];
                 // Rounds Are Not Updated Yet
-                if(playerTwo.rounds.length < tournament.numbeOfRoundsScheduled) {
+                if(playerTwo.rounds.length === tournament.numbeOfRoundsScheduled) {
                     updatePlayerRound(playerTwo, roundTwo);
                     isUpdated = true;
                 }
@@ -348,7 +348,7 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
                     return swiss;
                 }
             }
-        }
+        } 
         throw new Error(`Tounament ${tournamentId} No Update Took Place`);
     });
 }
