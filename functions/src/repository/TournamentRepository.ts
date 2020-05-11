@@ -18,6 +18,7 @@ const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
 
 const tournamentCollection = "tournaments";
+// tslint:disable-next-line: no-implicit-dependencies
 import uuidv4 from 'uuid/v4';
 
 const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDuration: number): MatchablePlayOnlineTournamentAccount | null => {
