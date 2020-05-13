@@ -97,6 +97,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                     const swissTournament = <SwissTournament> tournamentRef.data();
                     if (!swissTournament.players) {
                         swissTournament.players = new Array();
+                        swissTournament.playersUID = new Array();
                     }
                     let counter = swissTournament.players.length + 1; // Rank Counter
     
@@ -106,6 +107,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                                 player.rankNumber = counter;
                                 player.tournamentId = swissTournament.id;
                                 player.isActive = true;
+                                swissTournament.playersUID.push(player.uid);
                                 swissTournament.players.push(player);
                                 counter++;
                             } else {
@@ -374,4 +376,10 @@ export const setTournamentLockedState = async (tournamentId: string, isLocked: b
         return await updateTournament(tournament);
     }
     throw new Error('Tournament Not Found');
+}
+
+export const getUserActiveTournaments = async (userId: string) => {
+    return firestoreDatabase.collection(tournamentCollection)
+    .where('isLocked', '==', true)
+    .where("playersUID", 'array-contains', userId).get();
 }

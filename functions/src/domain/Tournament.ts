@@ -42,6 +42,7 @@ export class Tournament {
     public type !: TournamentType;
     public amount!: Amount;
     public isLocked = false;
+    public playersUID = new Array();
 }
 
 /**

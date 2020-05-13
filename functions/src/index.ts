@@ -31,7 +31,7 @@ import { setUpMatch } from './repository/MatchRepository';
 import { MatchResult } from './service/MatchService';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
-import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation } from './controller/TournamentController';
+import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation, getActiveUserTournamentsImplementation } from './controller/TournamentController';
 import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
@@ -284,6 +284,11 @@ app.post('/tournament/isLocked', (req, res) =>  {
 app.post('/tournament/player/isActive', (req, res) =>  {
     // tslint:disable-next-line: no-floating-promises
     setPlayerActiveState(req, res);
+});
+
+app.get('/tournament/activeTournaments', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getActiveUserTournamentsImplementation(req, res);
 });
 
 // ----------------------------- TOURNAMENT SERVICE END -----------------------------------------------
