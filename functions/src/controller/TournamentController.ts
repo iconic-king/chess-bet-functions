@@ -130,6 +130,10 @@ export const addPlayersToTournamentImplementation = async (req : Request, res: R
 export const addPlayerToTournamentImplementation = async (req : Request, res: Response) => {
     const player =  <PlayerSection> req.body;
     try {
+        const activeTournaments = await getUserActiveTournaments(player.uid);
+        if(!activeTournaments.empty){
+            throw new Error('user in active tournament');
+        }
         const transaction = await addPlayerToTournament(req.query.tournamentId, player);
         if(transaction) {
             res.status(200).send(transaction);  
