@@ -55,8 +55,8 @@ export const createUser = (user:admin.auth.UserRecord) => {
   date_created:date ,
   date_modified:date,
   permissions:[],
-  user_name : user.displayName === undefined ? 'anonymous' : user.displayName,
-  profile_photo_url : user.photoURL === undefined ? '' : user.photoURL,
+  user_name : (!user.displayName) ? 'anonymous' : user.displayName,
+  profile_photo_url : (!user.photoURL) ? '' : user.photoURL,
   fcmToken: ''
  }
 

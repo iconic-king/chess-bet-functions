@@ -214,6 +214,7 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
+                    
                     //Lock tournament
                     tournament.isLocked = true;
                     if(response.name) {

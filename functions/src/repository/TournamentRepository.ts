@@ -229,7 +229,7 @@ function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTourname
         const white = createMatchedPlayTournamentAccount(tournament.players[pair.whitePlayer - 1],
             tournament.players[pair.blackPlayer - 1], matchId, tournament.matchDuration, Alliance.WHITE, tournament);
         const black = createMatchedPlayTournamentAccount(tournament.players[pair.blackPlayer - 1],
-            tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);
+            tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);            
         if(white && black) {
             accounts.push(white, black);
         }
