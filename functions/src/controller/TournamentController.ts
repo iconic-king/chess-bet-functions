@@ -2,11 +2,11 @@ import { Response, Request } from 'firebase-functions';
 import { TPSApi } from '../api/TPSApi';
 import { SwissTournament, Tournament, PlayerSection, Round, CreateRoundFactory } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds, setTournamentPlayerIsActive, setTournamentLockedState } from '../repository/TournamentRepository';
+import { createSwissTournament, addPlayersToTournament, getTournamentByID, matchOnSwissParings, updateObject, updateTournament, updatePlayerRounds, setTournamentPlayerIsActive, setTournamentLockedState, addPlayerToTournament, getUserActiveTournaments } from '../repository/TournamentRepository';
 import { ParingOutput } from '../domain/ParingOutput';
 import { Alliance } from '../domain/Alliance';
 import { MatchResult, getResult, MatchStatus } from '../service/MatchService';
-import { removeTournamentMatch, getTournamentMatchableAccount } from '../repository/MatchRepository';
+import { removeTournamentMatch, getTournamentMatchableAccount, removeTournamentMatchable } from '../repository/MatchRepository';
 import { MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { StorageApi } from '../api/StorageApi';
 import { EmailMessage, TournamentNotification } from '../domain/Notification';
@@ -65,7 +65,7 @@ export const getTournamentParingsImplementation = async (req : Request, res: Res
         } else {
             res.status(403).send({
                 err: `No Tournament Of Type ${tournament.paringAlgorithm}`
-            }) 
+            })
         }
     } catch(error) {
         res.status(403).send(error)
@@ -102,6 +102,11 @@ export const createTournamentImplementation = async (req : Request, res: Respons
     }
 }
 
+/**
+ * Allow an array players in a tournament (FREE TOURNAMENTS ONLY)
+ * @param req 
+ * @param res 
+ */
 export const addPlayersToTournamentImplementation = async (req : Request, res: Response) => {
     const players =  <Array<PlayerSection>> req.body;
     console.log(players[0]);
@@ -117,16 +122,40 @@ export const addPlayersToTournamentImplementation = async (req : Request, res: R
     }
 }
 
+/**
+ * Allow one to be added as a player in a tournament
+ * @param req 
+ * @param res 
+ */
+export const addPlayerToTournamentImplementation = async (req : Request, res: Response) => {
+    const player =  <PlayerSection> req.body;
+    try {
+        const activeTournaments = await getUserActiveTournaments(player.uid);
+        if(!activeTournaments.empty){
+            throw new Error('user in active tournament');
+        }
+        const transaction = await addPlayerToTournament(req.query.tournamentId, player);
+        if(transaction) {
+            res.status(200).send(transaction);  
+        } else {
+            res.status(403).send({err : "Request Forbidden"})
+        }
+    } catch(error) {
+        res.status(403).send({err : (error) ? error : "Request Forbidden"})
+    }
+}
+
 export const setPlayerActiveState = async (req: Request, res: Response) => {
     try {
         const playerUID = req.query.playerUID;
         const tournamentId = req.query.tournamentId;
-        const isActive = req.query.isActive;
 
-        if(playerUID && tournamentId && isActive !== undefined) {
+        if(playerUID && tournamentId && req.query.isActive !== undefined) {
+            const isActive = (req.query.isActive === 'true');
             const tournament = await setTournamentPlayerIsActive(playerUID, tournamentId, isActive);
             if(tournament) {
                 res.status(200).send(tournament);  
+                return;
             }
         }
     } catch(error) {
@@ -173,28 +202,21 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         const round:  Round = {
                             playerNumber : '0000',
                             scheduledColor: Alliance.NOALLIANCE,
-                            result: 'U', //unpaired by the system,
-                            matchUrl: ''
-                        }
-                        player.rounds.push(round);
-                    } else if (player.rounds.length < tournament.numbeOfRoundsScheduled) {
-                        // Set Unknown Bye When User Previous Rounds Were not set
-                        const round:  Round = {
-                            playerNumber : '0000',
-                            scheduledColor: Alliance.NOALLIANCE,
-                            result: 'U', //unpaired by the system,
+                            result: '-', //unpaired by the system,
                             matchUrl: ''
                         }
                         player.rounds.push(round);
                     }
-                }                
+                }
                 // Get Parings From Next User
-                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);    
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);                  
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
                     
+                    //Lock tournament
+                    tournament.isLocked = true;
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);
@@ -267,6 +289,8 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                         tournament = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
                         // Remove Tournament Match After Evaluation
                         await removeTournamentMatch(matchResult.matchId);
+                        await removeTournamentMatchable(gainAccount.owner);
+                        await removeTournamentMatchable(lossAccount.owner);
                         if(tournament.name) {
                             res.status(200).send(tournament);
                             return;
@@ -287,13 +311,19 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
         if(tournamentNotification) {
             const tournament = await getTournamentByID(tournamentNotification.tournamentId);
             if(tournament) {
-                cors(req, res, async ()=> {
-                   const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
-                   if(result) {
-                    res.status(200).send(tournamentNotification);
-                    return;
-                   }
+                const promise = new Promise((resolve, reject) => {
+                    cors(req, res, async ()=> {
+                        const result =  await sendMailToTournamentPlayers(tournament, tournamentNotification);
+                        if(result) {
+                         resolve(result);
+                        } else {
+                         reject('Notification Not Sent');
+                        }
+                     });
                 });
+                await promise;
+                res.status(200).send(tournamentNotification);
+                return;
             }            
         }
     } catch (error) {
@@ -301,5 +331,25 @@ export const sendNotificationToTournamentPlayers =  async (req: Request, res: Re
         return;
     }
     res.status(403).send({err: "Error Occured"});
+}
+
+export const getActiveUserTournamentsImplementation = async (req: Request, res: Response) => {
+    try {
+        const uid = req.query.uid;
+        const tournaments = new Array<SwissTournament>();
+        if(uid) {
+            const tournamentsSnapshot = await getUserActiveTournaments(uid);
+            tournamentsSnapshot.forEach(tournament => {
+                tournaments.push(<SwissTournament> tournament.data())
+            });
+            res.status(200).send(tournaments);
+            return;
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(403).send({err : error});
+        return;
+    }
+    res.status(403).send({err : 'Invalid Request'});
 }
 

@@ -5,6 +5,21 @@
 
 import { ParingAlgorithm } from "./ParingAlgorithm";
 
+export enum TournamentType {
+    PAID = 'PAID',
+    FREE = 'FREE'
+}
+
+export enum Currency {
+    KES = 'KES',
+    USD = 'USD'
+}
+
+export interface Amount {
+    currency: Currency,
+    amount: number
+}
+
 export class Tournament {
     public matchDuration: number = 5; // Default tournament match duration
     public timeStamp: number | undefined;
@@ -24,7 +39,10 @@ export class Tournament {
     public allottedTimes!: string;
     public numbeOfRoundsScheduled!: number;
     public rounds!: number;
+    public type !: TournamentType;
+    public amount!: Amount;
     public isLocked = false;
+    public playersUID = new Array();
 }
 
 /**
@@ -46,7 +64,7 @@ export class PlayerSection {
     public birthDate: string | undefined;
     public points: number = 0;
     public rank: number = 0;
-    public isActive: boolean  = true; // Set false when user is removed from tournament
+    public isActive!: boolean;
     public rounds: Array<Round> = new Array();
 
     addRound(round: Round) {

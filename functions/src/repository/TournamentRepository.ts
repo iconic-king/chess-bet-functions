@@ -2,18 +2,24 @@
  * @autjor Collins Magondu 04/20/2020
  */
 import * as admin from 'firebase-admin';
-import { SwissTournament, PlayerSection, Tournament, Round } from '../domain/Tournament';
+import { SwissTournament, PlayerSection, Tournament, Round, TournamentType } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
 import { MatchablePlayOnlineTournamentAccount, MatchedPlayOnlineAccount, MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 import { ParingOutput, Pair } from '../domain/ParingOutput';
 import { createMatchedPlayTournamentAccount, createMatch } from './MatchRepository';
 import { Alliance } from '../domain/Alliance';
+import { DirectTransactionDTO } from '../domain/DirectTransactionDTO';
+import { getServiceAccountByUserId } from './PaymentsRepository';
+import { PaymentsApi } from '../api/PaymentsApi';
+import { ProductAccount } from '../domain/ServiceAccount';
 
 const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
 
 const tournamentCollection = "tournaments";
+// tslint:disable-next-line: no-implicit-dependencies
+import uuidv4 from 'uuid/v4';
 
 const createMatchableAccountFromPlayer = (player: PlayerSection, tournamentDuration: number): MatchablePlayOnlineTournamentAccount | null => {
     if(player.uid && player.email) {
@@ -91,6 +97,7 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                     const swissTournament = <SwissTournament> tournamentRef.data();
                     if (!swissTournament.players) {
                         swissTournament.players = new Array();
+                        swissTournament.playersUID = new Array();
                     }
                     let counter = swissTournament.players.length + 1; // Rank Counter
     
@@ -99,6 +106,8 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                             if(player.uid && player.email) {
                                 player.rankNumber = counter;
                                 player.tournamentId = swissTournament.id;
+                                player.isActive = true;
+                                swissTournament.playersUID.push(player.uid);
                                 swissTournament.players.push(player);
                                 counter++;
                             } else {
@@ -109,8 +118,6 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
                             return null;
                         }
                     }
-                    // Add Matchable Accounts For New Players
-                    await createMatchAbleAccountsForPlayers(players, swissTournament.matchDuration);
                     _transaction.update(tournamentRef.ref, swissTournament);
                     return swissTournament;
                 }
@@ -121,6 +128,61 @@ export const addPlayersToTournament = async (tournamentId: string ,players: Arra
         return null;
     });
 }
+
+export const addPlayerToTournament = async (tournamentId: string ,player: PlayerSection) => {
+    const tournamentRef = await firestoreDatabase.collection(tournamentCollection).doc(tournamentId).get();
+    return firestoreDatabase.runTransaction(async (_transaction) => {
+        try {
+            if(tournamentRef.exists) {
+                const tournament = <Tournament> tournamentRef.data();
+                // No Player Should Be Added if no data is provided.
+                if(tournament.isLocked) {
+                    return  null;
+                }
+                if(tournament.paringAlgorithm === ParingAlgorithm.SWISS) {
+                    const swissTournament = <SwissTournament> tournamentRef.data();
+                    if (!swissTournament.players) {
+                        swissTournament.players = new Array();
+                    }
+                    player.rankNumber = swissTournament.players.length + 1;
+                    player.tournamentId = swissTournament.id;
+                    player.isActive = true;
+
+                    if (swissTournament.typeOfTournament === TournamentType.PAID) {
+                        
+                        // PAID TOURNAMENT EXTRA LOGIC
+                        const account = await getServiceAccountByUserId(player.uid);
+
+                        if(!account) {
+                            throw new Error('No Account Found For User');
+                        }
+
+                        const transaction = new DirectTransactionDTO();
+                        transaction.accountId = account.accountId;
+                        transaction.amount = swissTournament.amount;
+                        transaction.ref = uuidv4();
+                        const productAccount = <ProductAccount> await PaymentsApi.makeDirectTransaction(transaction);
+                        console.log(productAccount);
+                        if(productAccount.id){
+                            console.log(productAccount);
+                            swissTournament.players.push(player);
+                        } else {
+                            throw new Error('User has inssuficient funds');
+                        }
+                    } else {
+                        swissTournament.players.push(player);
+                    }
+                    _transaction.update(tournamentRef.ref, swissTournament);
+                    return swissTournament;
+                }
+            }
+        } catch(error) {
+            console.error(error);
+        }
+        return null;
+    });
+}
+
 // Invoked During Tournament Creation
 export const createMatchableAccountsFromTournament = async (tournament: Tournament) => {
     let map = {}
@@ -167,7 +229,7 @@ function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTourname
         const white = createMatchedPlayTournamentAccount(tournament.players[pair.whitePlayer - 1],
             tournament.players[pair.blackPlayer - 1], matchId, tournament.matchDuration, Alliance.WHITE, tournament);
         const black = createMatchedPlayTournamentAccount(tournament.players[pair.blackPlayer - 1],
-            tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);
+            tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);            
         if(white && black) {
             accounts.push(white, black);
         }
@@ -185,7 +247,6 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
     for(const pair of paringOutput.pairs) {
         try {
         /// We have an odd number of players
-        console.log(pair);
         if(pair.blackPlayer === 0 && pair.whitePlayer) {
             const round:  Round = {
                 playerNumber : '0000',
@@ -207,8 +268,23 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             for(const account of accounts) {
                     map.tournament_matchables[account.owner] = account;
             }
+            const playerOneRound :Round = {
+                playerNumber : tournament.players[whitePlayerIndex].rankNumber.toString(),
+                scheduledColor: Alliance.BLACK,
+                result: '-',
+                matchUrl: ''
+            }
+
+            const playerOneTwo :Round = {
+                playerNumber : tournament.players[blackPlayerIndex].rankNumber.toString(),
+                scheduledColor: Alliance.WHITE,
+                result: '-',
+                matchUrl: ''
+            }
+            tournament.players[blackPlayerIndex].rounds.push(playerOneRound);
+            tournament.players[whitePlayerIndex].rounds.push(playerOneTwo);
             isMatchMade = true;
-            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled++ : 1;
+            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled + 1          : 1;
             }
         } catch (error) {
             console.error(error);
@@ -232,7 +308,9 @@ function updatePlayerRound(player: PlayerSection, round: Round){
     } else if  (round.result === 'D' || round.result === '=') {
         player.points = (player.points) ? player.points + 0.5 :  0.5;
     }
-    player.rounds.push(round);
+    const size = player.rounds.length;
+    player.rounds[size -1].matchUrl = round.matchUrl;
+    player.rounds[size -1].result = round.result;
 } 
 
 /**
@@ -254,14 +332,14 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
                 const swiss = <SwissTournament> doc.data();
                 const playerOne = swiss.players[playerRankOne - 1];
                 // Rounds Are Not Updated Yet
-                if(playerOne.rounds.length < tournament.numbeOfRoundsScheduled) {
+                if(playerOne.rounds.length === tournament.numbeOfRoundsScheduled) {
                     updatePlayerRound(playerOne, roundOne);
                     isUpdated = true;
                 }
                 isUpdated = false;
                 const playerTwo = swiss.players[playerRankTwo - 1];
                 // Rounds Are Not Updated Yet
-                if(playerTwo.rounds.length < tournament.numbeOfRoundsScheduled) {
+                if(playerTwo.rounds.length === tournament.numbeOfRoundsScheduled) {
                     updatePlayerRound(playerTwo, roundTwo);
                     isUpdated = true;
                 }
@@ -272,7 +350,7 @@ export const updatePlayerRounds = (tournamentId: string, playerRankOne: number, 
                     return swiss;
                 }
             }
-        }
+        } 
         throw new Error(`Tounament ${tournamentId} No Update Took Place`);
     });
 }
@@ -283,7 +361,7 @@ export const setTournamentPlayerIsActive = async (playerUID: string, tournamentI
     if(tournament) {
         tournament.players.forEach(player => {
             if(player.uid === playerUID) {
-                player.isActive = isActive;
+                player.isActive = isActive; 
             }
         });
         return await updateTournament(tournament);
@@ -298,4 +376,10 @@ export const setTournamentLockedState = async (tournamentId: string, isLocked: b
         return await updateTournament(tournament);
     }
     throw new Error('Tournament Not Found');
+}
+
+export const getUserActiveTournaments = async (userId: string) => {
+    return firestoreDatabase.collection(tournamentCollection)
+    .where('isLocked', '==', true)
+    .where("playersUID", 'array-contains', userId).get();
 }
