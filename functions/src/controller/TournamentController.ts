@@ -185,7 +185,7 @@ export const setLockedStateOfTournament = async (req: Request, res: Response) =>
 export const scheduleTournamentMatchesImplementation = async (req : Request, res: Response) => {
     try {
         if(req.query.tournamentId) {
-            const tournament = await getTournamentByID(req.query.tournamentId);            
+            const tournament = await getTournamentByID(req.query.tournamentId);       
             // Change logic is more than one tournament type is possible
             if(tournament){
                 // If played rounds are equivalent to the rounds to be played do not proceed
@@ -208,15 +208,18 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
                         player.rounds.push(round);
                     }
                 }
+
+                //Lock tournament before paring
+                tournament.isLocked = true;
+                await updateTournament(tournament)
+
                 // Get Parings From Next User
                 const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);                  
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
                     const response = <SwissTournament> await TPSApi.validateSwissTournament(tournament);
-                    
-                    //Lock tournament
-                    tournament.isLocked = true;
+
                     if(response.name) {
                         // Valid Response
                         const swissTournament = await updateTournament(tournament);
@@ -270,8 +273,15 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                 if(gainAccount.isForTournament && lossAccount.isForTournament) {
                     let gainRound: Round;
                     let lossRound:Round;
-                    const white = gainAccount.sidePlayed === Alliance.WHITE ? lossAccount.opponent : gainAccount.opponent;
-                    const black = gainAccount.sidePlayed === Alliance.BLACK ? lossAccount.opponent : gainAccount.opponent;
+                    let white : string, black : string;
+                    // Set Actual names as opposed to UIDs
+                    if(matchResult.gainName && matchResult.lossName) {
+                        white = gainAccount.sidePlayed === Alliance.WHITE ? matchResult.gainName : matchResult.lossName;
+                        black = gainAccount.sidePlayed === Alliance.BLACK ? matchResult.lossName : matchResult.gainName; 
+                    } else {
+                        white = gainAccount.sidePlayed === Alliance.WHITE ? lossAccount.opponent : gainAccount.opponent;
+                        black = gainAccount.sidePlayed === Alliance.BLACK ? lossAccount.opponent : gainAccount.opponent;
+                    }
                     const match = await StorageApi.storeGamePGN(white, black, "Chess MVP Tournament", matchResult, getResult(matchResult, gainAccount.sidePlayed));
                     if(matchResult.matchStatus === MatchStatus.DRAW) {
                         gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '=', match);

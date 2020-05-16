@@ -13,6 +13,8 @@ export interface MatchResult {
     matchStatus: MatchStatus;
     gain: string;
     loss: string;
+    gainName: string,
+    lossName: string,
     pgnText: string
     _id:string;
 }
