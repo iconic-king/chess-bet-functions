@@ -271,14 +271,14 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             const playerOneRound :Round = {
                 playerNumber : tournament.players[whitePlayerIndex].rankNumber.toString(),
                 scheduledColor: Alliance.BLACK,
-                result: '-',
+                result: '0',
                 matchUrl: ''
             }
 
             const playerOneTwo :Round = {
                 playerNumber : tournament.players[blackPlayerIndex].rankNumber.toString(),
                 scheduledColor: Alliance.WHITE,
-                result: '-',
+                result: '0',
                 matchUrl: ''
             }
             tournament.players[blackPlayerIndex].rounds.push(playerOneRound);

@@ -76,30 +76,36 @@ export const getTournamentMatch = (matchId: string) => {
   return tournamentMatches.child(matchId).once('value');
 }
 
+export const createMatch = (black:string, white:string , match_type:MatchType)=> {
+  const match: MatchService = {
+    timerStamp: new Date().getTime(), // Used to reset timers during game play
+    match_type : match_type,
+    players : {
+      BLACK : {
+         owner :black,
+         from : 0,
+         to: 0,
+         pgn: '',
+         gameTimeLeft: 0,
+         events : []
+      },
+      WHITE :{
+        owner :white ,
+        from : 0, 
+        to: 0,
+        pgn: '',
+        gameTimeLeft: 0,
+        events : []
+      }
+    },
+    scheduleEvaluation: false
+  }
+  return match;
+}
+
 // TODO Add duration and date of match creaton
 export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
-    const match:MatchService = {
-        match_type : match_type,
-        players : {
-          BLACK : {
-             owner :black,
-             from : 0,
-             to: 0,
-             pgn: '',
-             gameTimeLeft: 0,
-             events : []
-          },
-          WHITE :{
-            owner :white ,
-            from : 0, 
-            to: 0,
-            pgn: '',
-            gameTimeLeft: 0,
-            events : []
-          }
-        },
-        scheduleEvaluation: false
-      }
+   const match = createMatch(black, white, match_type);
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
            return updateMatchedAccount(white,"BLACK",matchId,black).then(()=>{
@@ -138,32 +144,6 @@ export const createMatchedPlayTournamentAccount = (player: PlayerSection, oppone
       return account;
     }
     return null;
-}
-
-export const createMatch = (black:string, white:string , match_type:MatchType)=> {
-  const match: MatchService = {
-    match_type : match_type,
-    players : {
-      BLACK : {
-         owner :black,
-         from : 0,
-         to: 0,
-         pgn: '',
-         gameTimeLeft: 0,
-         events : []
-      },
-      WHITE :{
-        owner :white ,
-        from : 0, 
-        to: 0,
-        pgn: '',
-        gameTimeLeft: 0,
-        events : []
-      }
-    },
-    scheduleEvaluation: false
-  }
-  return match;
 }
 
 /**

@@ -26,11 +26,12 @@ export const unlinkPromise = (file: string) => {
 
 export class StorageApi {
    static async storeGamePGN (white: string, black: string, event: string, matchResult: MatchResult, result: string) {
-        const accessToken = uuidv4(); 
-        const file = await writeFilePromise (`/tmp/${matchResult.matchId}.pgn`,
+        const accessToken = uuidv4();
+        const fileName = white + 'vs' + black;
+        const file = await writeFilePromise(`/tmp/${fileName}.pgn`,
         new PGNObject(white, black, event, matchResult.pgnText, result).toString());
         const data = await storage.bucket().upload(file, {
-        destination: `games/${matchResult.matchId}.pgn`,
+        destination: `games/${fileName}.pgn`,
         predefinedAcl: "authenticatedRead",
         metadata: {
             metadata: {
