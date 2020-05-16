@@ -274,7 +274,6 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                     let gainRound: Round;
                     let lossRound:Round;
                     let white : string, black : string;
-
                     // Set Actual names as opposed to UIDs
                     if(matchResult.gainName && matchResult.lossName) {
                         white = gainAccount.sidePlayed === Alliance.WHITE ? matchResult.gainName : matchResult.lossName;
