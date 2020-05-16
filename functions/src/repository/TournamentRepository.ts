@@ -284,13 +284,17 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             tournament.players[blackPlayerIndex].rounds.push(playerOneRound);
             tournament.players[whitePlayerIndex].rounds.push(playerOneTwo);
             isMatchMade = true;
-            tournament.numbeOfRoundsScheduled = (tournament.numbeOfRoundsScheduled) ? tournament.numbeOfRoundsScheduled + 1          : 1;
             }
         } catch (error) {
             console.error(error);
         }
     }
     if(isMatchMade) {
+        if(tournament.numbeOfRoundsScheduled) {
+            tournament.numbeOfRoundsScheduled++;
+        } else {
+            tournament.numbeOfRoundsScheduled = 1;
+        }
         return map;
     } else {
         throw new Error("Map Has Not Been Found");
