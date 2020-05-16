@@ -40,11 +40,12 @@ export const getMatchableAccount = (uid: string) => {
 }
 
 
- const updateMatchedAccount = (uid:string,opponent:string,matchId:string,oppenentId:string) => {
+ const updateMatchedAccount = (uid:string, opponent:string, matchId:string, oppenentId:string) => {
    return matchableReference.child(uid).update({
      matched : true,
      matchable : false,
      opponent : opponent,
+     timeStamp: new Date().getTime(),
      matchId: matchId,
      opponentId: oppenentId
    })
@@ -78,7 +79,6 @@ export const getTournamentMatch = (matchId: string) => {
 
 export const createMatch = (black:string, white:string , match_type:MatchType)=> {
   const match: MatchService = {
-    timeStamp: new Date().getTime(), // Used to reset timers during game play
     match_type : match_type,
     players : {
       BLACK : {
@@ -132,13 +132,13 @@ export const getMatch = (match_id:string) => {
 export const createMatchedPlayTournamentAccount = (player: PlayerSection, opponent: PlayerSection, matchId: string, 
   duration: number, alliance: Alliance, tournament: SwissTournament): MatchedPlayOnlineTournamentAccount | null => {
     if(opponent.name && player.uid && opponent.uid) {
-      const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE, true, (alliance === Alliance.WHITE) ? 'BLACK': 'WHITE', matchId, duration, opponent.uid);
+      const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE,
+        true, (alliance === Alliance.WHITE) ? 'BLACK': 'WHITE', matchId, duration, opponent.uid, new Date().getTime());
       account.email = player.email;
       account.owner = player.uid;
       account.result = '0'
       account.sidePlayed = alliance;
       account.tournamentId = tournament.id;
-      account.timeStamp = new Date().getTime();
       account.oppenentRank = opponent.rankNumber;
       account.currentRound = (tournament.numbeOfRoundsScheduled) ?  tournament.numbeOfRoundsScheduled + 1 : 1;
       return account;
@@ -151,12 +151,14 @@ export const createMatchedPlayTournamentAccount = (player: PlayerSection, oppone
  */
 export const createDirectMatchFromTargetedChallenge = (targetChallenge: TargetedChallenge) => {
   const map = {matchables : {}, matches: {}}
+  const time =  new Date().getTime();
   map.matchables[targetChallenge.owner] = <MatchedPlayOnlineAccount> {
     opponent: 'WHITE',
     opponentId: targetChallenge.target,
     owner: targetChallenge.owner,
     matchable: false,
     matched: true,
+    timeStamp: time,
     elo_rating: 0,
     match_type: targetChallenge.matchType,
     online: true,
@@ -169,6 +171,7 @@ export const createDirectMatchFromTargetedChallenge = (targetChallenge: Targeted
     owner: targetChallenge.target,
     opponent: 'BLACK',
     matchable: false,
+    timeStamp: time,
     matched: true,
     elo_rating: 0,
     match_type: targetChallenge.matchType,

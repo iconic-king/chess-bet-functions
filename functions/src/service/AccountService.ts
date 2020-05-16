@@ -51,7 +51,6 @@ export interface Amount {
 // Match interface should be PGN and FEN compatible
 export interface MatchService{
     match_type : MatchType,
-    timeStamp: number,
     players : {
       BLACK : {
          owner :string;
@@ -120,13 +119,15 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount {
     opponent : string;
     opponentId: string;
     matchId: string;
+    timeStamp: number;
     constructor (owner: string,matchable :boolean, matched :boolean,
         elo_rating: number,match_type: MatchType,online:boolean,
-        opponent: string, matchId: string, duration: number, opponentId: string){
+        opponent: string, matchId: string, duration: number, opponentId: string, timeStamp: number){
             super(owner, matchable, matched, elo_rating, match_type, online, duration);
             this.matchId = matchId;
             this.opponent = opponent;
             this.opponentId = opponentId;
+            this.timeStamp = timeStamp;
         }
 }
 
@@ -148,7 +149,6 @@ export class MatchedPlayOnlineTournamentAccount extends MatchedPlayOnlineAccount
     public result!: string;
     public sidePlayed!: Alliance;
     public isForTournament = true
-    public timeStamp: number | undefined;
     public createdByUID : string | undefined;
     public tournamentId: string  | undefined;
     public email: string | undefined; // Used for notification of a match 
