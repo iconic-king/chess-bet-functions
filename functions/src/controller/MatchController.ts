@@ -196,6 +196,8 @@ export const forceEvaluateMatch = (req,res) => {
         ? match.players.BLACK.owner : match.players.WHITE.owner; 
     
         const matchResult: MatchResult = {
+          gainName: gain,
+          lossName: loss,
           pgnText : match.players.WHITE.pgn,   
           matchId : snapshot.key || '',
           matchStatus: MatchStatus.ABANDONMENT,

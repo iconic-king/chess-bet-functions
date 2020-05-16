@@ -78,7 +78,7 @@ export const getTournamentMatch = (matchId: string) => {
 
 export const createMatch = (black:string, white:string , match_type:MatchType)=> {
   const match: MatchService = {
-    timerStamp: new Date().getTime(), // Used to reset timers during game play
+    timeStamp: new Date().getTime(), // Used to reset timers during game play
     match_type : match_type,
     players : {
       BLACK : {

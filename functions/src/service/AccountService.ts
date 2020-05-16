@@ -51,7 +51,7 @@ export interface Amount {
 // Match interface should be PGN and FEN compatible
 export interface MatchService{
     match_type : MatchType,
-    timerStamp: number,
+    timeStamp: number,
     players : {
       BLACK : {
          owner :string;
