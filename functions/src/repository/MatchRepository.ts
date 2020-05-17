@@ -114,6 +114,7 @@ export const setUpMatch = async (black:string, white:string , match_type:MatchTy
             await updateMatchedAccount(black,"WHITE",matchId,white, time);
             console.log("Match Done ;-)");
             callback();
+            return true;
            } catch(error) {
             console.log(error);
            }

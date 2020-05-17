@@ -51,16 +51,16 @@ export const onUserDeleted = functions.auth.user().onDelete((user) => {
  *  Attempts to listener to any update on a challenge in order to set a match
  * */ 
 
-export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite((snap, context) => {
+export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite(async (snap, context) => {
     const challenge = <Challenge> snap.after.data();
     if(challenge.accepted){
         // Handle set up of match
-        setUpMatch(challenge.owner, challenge.requester, challenge.matchType, () => {
+        const status = await setUpMatch(challenge.owner, challenge.requester, challenge.matchType, () => {
             console.log("Match created : ", challenge);
         });
-        return true;
+        return status;
     }
-    return false;
+    return status;
 });
 
 /**
