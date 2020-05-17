@@ -104,24 +104,19 @@ export const createMatch = (black:string, white:string , match_type:MatchType)=>
 }
 
 // TODO Add duration and date of match creaton
-export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
+export const setUpMatch = async (black:string, white:string , match_type:MatchType,callback :Function) => {
    const match = createMatch(black, white, match_type);
     const matchId = matchesReference.push(match).key
-    if(matchId !==null){
-           const time = new Date().getTime();
-           return updateMatchedAccount(white,"BLACK",matchId,black, time).then(()=>{
-               updateMatchedAccount(black,"WHITE",matchId,white, time).then(()=>{
-                console.log("Match Done ;-)");
-                callback();
-               })
-               .catch((error)=>{
-                console.log(error.message);
-               })
-           })
-           .catch((error)=>{
+    if(matchId !== null ){
+           try {
+            const time = new Date().getTime();
+            await updateMatchedAccount(white,"BLACK",matchId,black, time);
+            await updateMatchedAccount(black,"WHITE",matchId,white, time);
+            console.log("Match Done ;-)");
+            callback();
+           } catch(error) {
             console.log(error);
-            
-           });
+           }
     }
     return null;
 }
