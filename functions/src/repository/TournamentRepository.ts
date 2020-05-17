@@ -1,5 +1,5 @@
 /**
- * @autjor Collins Magondu 04/20/2020
+ * @author Collins Magondu 04/20/2020
  */
 import * as admin from 'firebase-admin';
 import { SwissTournament, PlayerSection, Tournament, Round, TournamentType } from '../domain/Tournament';

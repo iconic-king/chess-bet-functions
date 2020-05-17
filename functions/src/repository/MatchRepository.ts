@@ -40,12 +40,12 @@ export const getMatchableAccount = (uid: string) => {
 }
 
 
- const updateMatchedAccount = (uid:string, opponent:string, matchId:string, oppenentId:string) => {
+ const updateMatchedAccount = (uid:string, opponent:string, matchId:string, oppenentId:string, time: number) => {
    return matchableReference.child(uid).update({
      matched : true,
      matchable : false,
      opponent : opponent,
-     timeStamp: new Date().getTime(),
+     timeStamp: time,
      matchId: matchId,
      opponentId: oppenentId
    })
@@ -108,8 +108,9 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
    const match = createMatch(black, white, match_type);
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
-           return updateMatchedAccount(white,"BLACK",matchId,black).then(()=>{
-               updateMatchedAccount(black,"WHITE",matchId,white).then(()=>{
+           const time = new Date().getTime();
+           return updateMatchedAccount(white,"BLACK",matchId,black, time).then(()=>{
+               updateMatchedAccount(black,"WHITE",matchId,white, time).then(()=>{
                 console.log("Match Done ;-)");
                 callback();
                })
