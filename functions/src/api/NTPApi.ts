@@ -1,3 +1,4 @@
+
 const NTPTS = require('ntp-time-sync');
 
 const timeSync = NTPTS.default.getInstance();

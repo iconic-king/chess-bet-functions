@@ -37,7 +37,6 @@ import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './cont
 import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
-
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
 });

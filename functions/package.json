@@ -29,6 +29,7 @@
     "firebase-queue": "^1.6.1",
     "firesql": "^2.0.2",
     "nodemailer": "^6.4.6",
+    "ntp-time-sync": "^0.1.0",
     "request": "^2.88.2",
     "sinon": "^8.1.0",
     "twilio": "^3.43.0"
