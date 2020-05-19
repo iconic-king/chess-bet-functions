@@ -36,7 +36,6 @@ import { createServiceAccountImplementation, getServiceAccountImplementation, in
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
-
 export const onUserCreated = functions.auth.user().onCreate((user) => {
     createUserAccountImplementation(user);
 });
