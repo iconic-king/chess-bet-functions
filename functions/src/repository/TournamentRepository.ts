@@ -254,6 +254,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
                 result: 'Z',
                 matchUrl: ''
             }
+            tournament.players[pair.whitePlayer - 1].points++;
             tournament.players[pair.whitePlayer - 1].rounds.push(round);
         } else if (pair.blackPlayer && pair.whitePlayer) {
             const blackPlayerIndex = pair.blackPlayer - 1;

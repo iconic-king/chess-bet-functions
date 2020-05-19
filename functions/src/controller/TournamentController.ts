@@ -211,10 +211,11 @@ export const scheduleTournamentMatchesImplementation = async (req : Request, res
 
                 //Lock tournament before paring
                 tournament.isLocked = true;
-                await updateTournament(tournament)
+                await updateTournament(tournament)                
 
                 // Get Parings From Next User
-                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);                  
+                const paringOutput = <ParingOutput> await TPSApi.getSwissParingOutput(tournament);   
+                console.log(paringOutput);
                 if(paringOutput.pairs) {
                     const map = matchOnSwissParings(paringOutput, tournament);
                     // Validate the tournament state after parings have been added
