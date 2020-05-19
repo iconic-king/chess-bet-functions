@@ -34,6 +34,7 @@ import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation, getActiveUserTournamentsImplementation } from './controller/TournamentController';
 import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
+import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
 
@@ -108,6 +109,14 @@ app.post('/forceEvaluateMatch', (req,res) => {
     }
  });
 
+ app.get('/timeStamp', async (req, res) => {
+     try {
+        const time = <NTPTime> await NTPApi.getTime();
+        res.status(200).send(time);
+     } catch (error) {
+         res.status(403).send({err: error});
+     }
+ })
 
  app.post('/challenge/sendTargetedChallenge', (req, res) => {
     verifyToken(req, res, () => { 
