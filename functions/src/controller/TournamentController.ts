@@ -286,9 +286,6 @@ export const evaluateTournamentMatchImplementation = async (req: Request, res: R
                     if(matchResult.matchStatus === MatchStatus.DRAW) {
                         gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '=', match);
                         lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '=', match);     
-                    } else if (matchResult.matchStatus === MatchStatus.ABANDONMENT) { // In the event of a forfeit
-                        gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '+', match);
-                        lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '-', match);
                     } else {
                         gainRound = CreateRoundFactory(gainAccount.oppenentRank.toString(), gainAccount.sidePlayed, '1', match);
                         lossRound = CreateRoundFactory(lossAccount.oppenentRank.toString(), lossAccount.sidePlayed, '0', match);
