@@ -4,7 +4,7 @@
 import * as admin from 'firebase-admin';
 import { SwissTournament, PlayerSection, Tournament, Round, TournamentType } from '../domain/Tournament';
 import { ParingAlgorithm } from '../domain/ParingAlgorithm';
-import { MatchablePlayOnlineTournamentAccount, MatchedPlayOnlineAccount, MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
+import { MatchablePlayOnlineTournamentAccount, MatchedPlayOnlineTournamentAccount } from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 import { ParingOutput, Pair } from '../domain/ParingOutput';
 import { createMatchedPlayTournamentAccount, createMatch } from './MatchRepository';
@@ -223,12 +223,12 @@ export const updateTournament = async (tournament: Tournament) => {
     return null;
 }
 
-function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTournament, matchId: string): Array<MatchedPlayOnlineAccount>{
+async function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTournament, matchId: string){
     const accounts = new Array<MatchedPlayOnlineTournamentAccount>();
     if(pair.whitePlayer && pair.blackPlayer) {
-        const white = createMatchedPlayTournamentAccount(tournament.players[pair.whitePlayer - 1],
+        const white = await createMatchedPlayTournamentAccount(tournament.players[pair.whitePlayer - 1],
             tournament.players[pair.blackPlayer - 1], matchId, tournament.matchDuration, Alliance.WHITE, tournament);
-        const black = createMatchedPlayTournamentAccount(tournament.players[pair.blackPlayer - 1],
+        const black = await createMatchedPlayTournamentAccount(tournament.players[pair.blackPlayer - 1],
             tournament.players[pair.whitePlayer - 1], matchId, tournament.matchDuration, Alliance.BLACK, tournament);            
         if(white && black) {
             accounts.push(white, black);
@@ -237,7 +237,7 @@ function createMatchedSwissAccountFromPair(pair: Pair, tournament: SwissTourname
     return accounts;
 }
 
-export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: SwissTournament) => {
+export const matchOnSwissParings = async (paringOutput: ParingOutput, tournament: SwissTournament) => {
     let isMatchMade = false;
     const map = {
         tournament_matchables: {},
@@ -262,7 +262,7 @@ export const matchOnSwissParings = (paringOutput: ParingOutput, tournament: Swis
             const match = createMatch(tournament.players[blackPlayerIndex].uid, tournament.players[whitePlayerIndex].uid, MatchType.PLAY_ONLINE);
             const matchId = tournament.players[whitePlayerIndex].uid.concat(tournament.players[blackPlayerIndex].uid);
             map.tournament_matches[matchId] = match;
-            const accounts = createMatchedSwissAccountFromPair (pair, tournament, matchId);
+            const accounts  = await createMatchedSwissAccountFromPair (pair, tournament, matchId);
             if(accounts.length  !== 2) {
                 throw new Error("Accounts Must Be Two");
             }

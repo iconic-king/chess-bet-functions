@@ -4,6 +4,7 @@ import { MatchType } from '../domain/MatchType';
 import { PlayerSection, SwissTournament } from '../domain/Tournament';
 import { Alliance } from '../domain/Alliance';
 import { TargetedChallenge } from '../domain/Challenge';
+import { NTPApi, NTPTime } from '../api/NTPApi';
 
 const realtimeDatabase = admin.database();
 
@@ -109,7 +110,8 @@ export const setUpMatch = async (black:string, white:string , match_type:MatchTy
     const matchId = matchesReference.push(match).key
     if(matchId !== null ){
            try {
-            const time = new Date().getTime();
+            const ntpTime = <NTPTime> await NTPApi.getTime();
+            const time = new Date(ntpTime.now).getTime();
             await updateMatchedAccount(white,"BLACK",matchId,black, time);
             await updateMatchedAccount(black,"WHITE",matchId,white, time);
             console.log("Match Done ;-)");
@@ -126,8 +128,8 @@ export const getMatch = (match_id:string) => {
    return matchesReference.child(match_id).once('value');
 }
 
-export const createMatchedPlayTournamentAccount = (player: PlayerSection, opponent: PlayerSection, matchId: string, 
-  duration: number, alliance: Alliance, tournament: SwissTournament): MatchedPlayOnlineTournamentAccount | null => {
+export const createMatchedPlayTournamentAccount = async (player: PlayerSection, opponent: PlayerSection, matchId: string, 
+  duration: number, alliance: Alliance, tournament: SwissTournament) => {
     if(opponent.name && player.uid && opponent.uid) {
       const account = new MatchedPlayOnlineTournamentAccount(player.uid, false, true, 0, MatchType.PLAY_ONLINE,
         true, (alliance === Alliance.WHITE) ? 'BLACK': 'WHITE', matchId, duration, opponent.uid, new Date().getTime());
@@ -137,6 +139,8 @@ export const createMatchedPlayTournamentAccount = (player: PlayerSection, oppone
       account.sidePlayed = alliance;
       account.tournamentId = tournament.id;
       account.oppenentRank = opponent.rankNumber;
+      const ntpTime = <NTPTime> await NTPApi.getTime();
+      account.timeStamp = new Date(ntpTime.now).getTime();
       account.currentRound = (tournament.numbeOfRoundsScheduled) ?  tournament.numbeOfRoundsScheduled + 1 : 1;
       return account;
     }
@@ -146,16 +150,16 @@ export const createMatchedPlayTournamentAccount = (player: PlayerSection, oppone
 /**
  * Creates match directy as a json object withoout depending on a challenge trigger
  */
-export const createDirectMatchFromTargetedChallenge = (targetChallenge: TargetedChallenge) => {
+export const createDirectMatchFromTargetedChallenge = async (targetChallenge: TargetedChallenge) => {
   const map = {matchables : {}, matches: {}}
-  const time =  new Date().getTime();
+  const ntpTime = <NTPTime> await NTPApi.getTime();
   map.matchables[targetChallenge.owner] = <MatchedPlayOnlineAccount> {
     opponent: 'WHITE',
     opponentId: targetChallenge.target,
     owner: targetChallenge.owner,
     matchable: false,
     matched: true,
-    timeStamp: time,
+    timeStamp: new Date(ntpTime.now).getTime(),
     elo_rating: 0,
     match_type: targetChallenge.matchType,
     online: true,
@@ -168,7 +172,7 @@ export const createDirectMatchFromTargetedChallenge = (targetChallenge: Targeted
     owner: targetChallenge.target,
     opponent: 'BLACK',
     matchable: false,
-    timeStamp: time,
+    timeStamp: new Date(ntpTime.now).getTime(),
     matched: true,
     elo_rating: 0,
     match_type: targetChallenge.matchType,
