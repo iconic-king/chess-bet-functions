@@ -251,7 +251,7 @@ export const matchOnSwissParings = async (paringOutput: ParingOutput, tournament
             const round:  Round = {
                 playerNumber : '0000',
                 scheduledColor: Alliance.NOALLIANCE,
-                result: 'Z',
+                result: 'U',
                 matchUrl: ''
             }
             tournament.players[pair.whitePlayer - 1].points++;
