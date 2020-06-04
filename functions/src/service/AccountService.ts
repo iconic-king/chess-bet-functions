@@ -2,6 +2,7 @@ import { MatchType } from "../domain/MatchType";
 import { MatchResult } from "./MatchService";
 import { Alliance } from "../domain/Alliance";
 
+
 export interface UserService{
     email: string | undefined,
     uid: string,
@@ -49,7 +50,9 @@ export interface Amount {
     amount: number;
 }
 // Match interface should be PGN and FEN compatible
-export interface MatchService{
+
+// TODO: Add promoted peice
+export interface MatchService {
     match_type : MatchType,
     players : {
       BLACK : {
@@ -58,7 +61,7 @@ export interface MatchService{
          to: number;
          pgn: string;
          gameTimeLeft: number; // Usefull in controlling the timer
-         events : Array<MatchEvent> ;
+         events : Array<MatchEvent>;
       }
       WHITE :{
         owner :string
@@ -86,6 +89,8 @@ export interface MatchDetailsService {
     match_type: MatchType;
     match_result: MatchResult; 
     players : Array<Player>;
+    dateCreated: string;
+    amount: Amount | null;
     matchPgn: string; //Match PGN String
 }
 
@@ -111,7 +116,7 @@ export class MatchableAccount implements MatchableAccountService {
     }
 }
 
-export class MatchablePlayOnlineAccount extends MatchableAccount { 
+export class MatchablePlayOnlineAccount extends MatchableAccount {
 }
 
 
@@ -129,6 +134,15 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount {
             this.opponentId = opponentId;
             this.timeStamp = timeStamp;
         }
+}
+
+
+export class MatchableBetOnlineAccount extends MatchableAccount {
+    public amount!: Amount;
+}
+
+export class MatchedBetOnlineAccount extends MatchedPlayOnlineAccount {
+    public amount!: Amount;
 }
 
 /**

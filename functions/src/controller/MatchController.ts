@@ -129,10 +129,23 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         const accountTwoSnapshot =  await getUserAccount(matchResult.loss).get();
         account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
         exchangePoints(account_one, account_two, matchResult);
+
+        // Get Service Accounts
+
+        // const gainAccount = await getServiceAccountByUserId(matchResult.gain);
+        // const lossAccount = await getServiceAccountByUserId(matchResult.loss); 
+
+        /**
+         * Handle Payments
+         * eg PaymentsApi.transferBettingFunds(lossAccount.accountId, gainAccount.accountId, match_result.amount);
+         */
+
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
             const match = <MatchService> matchSnaphot.val();
             const match_details: MatchDetailsService = {
+                amount: matchResult.amount,
+                dateCreated: new Date().toLocaleString(),
                 match_result : matchResult,
                 match_type : match.match_type,
                 players : [
@@ -201,6 +214,8 @@ export const forceEvaluateMatch = (req,res) => {
           pgnText : match.players.WHITE.pgn,   
           matchId : snapshot.key || '',
           matchStatus: MatchStatus.ABANDONMENT,
+          amount: null,
+          matchType: match.match_type,
           gain: gain,
           loss: loss,
           _id: snapshot.key || ''

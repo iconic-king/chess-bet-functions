@@ -2,9 +2,9 @@
  * @autjor Collins Magondu 26/03/2020
  */
 import * as admin from 'firebase-admin';
-import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
+import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, Type } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
-import { MatchableAccount, UserService } from '../service/AccountService';
+import { MatchableAccount, UserService, MatchableBetOnlineAccount } from '../service/AccountService';
 import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGetMatched} from './MatchRepository';
 import { getUserByUID } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
@@ -23,21 +23,38 @@ function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
      minEloRating: challengeDTO.minEloRating,
      maxEloRating: challengeDTO.maxEloRating,
      eloRating: challengeDTO.eloRating,
-     matchType: MatchType.PLAY_ONLINE,
-     timeStamp: Date.now()
+     matchType: (challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) ? MatchType.BET_ONLINE : MatchType.PLAY_ONLINE,
+     timeStamp: Date.now(),
+     amount: (!challengeDTO.amount.amount) ? 0 : challengeDTO.amount.amount,
+     currency: (!challengeDTO.amount.currency) ? 'KES' : challengeDTO.amount.currency
  }
 }
 
 async function createMatchableAccount(challengeDTO: ChallengeDTO) {
-    const matchableAccount: MatchableAccount = {
-        duration: challengeDTO.duration,
-        date_created: Date.now().toString(),
-        owner: challengeDTO.owner,
-        matchable: false,
-        matched: false,
-        elo_rating: challengeDTO.eloRating,
-        match_type: MatchType.PLAY_ONLINE,
-        online: false
+    let matchableAccount;
+    if(challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) {
+        matchableAccount = <MatchableBetOnlineAccount> {
+            amount : challengeDTO.amount,
+            duration: challengeDTO.duration,
+            date_created: Date.now().toString(),
+            owner: challengeDTO.owner,
+            matchable: false,
+            matched: false,
+            elo_rating: challengeDTO.eloRating,
+            match_type: MatchType.PLAY_ONLINE,
+            online: false
+        }
+    } else  {
+         matchableAccount = <MatchableAccount> {
+            duration: challengeDTO.duration,
+            date_created: Date.now().toString(),
+            owner: challengeDTO.owner,
+            matchable: false,
+            matched: false,
+            elo_rating: challengeDTO.eloRating,
+            match_type: MatchType.PLAY_ONLINE,
+            online: false
+        }
     }
     return setMatchableAccount(matchableAccount);
 }
@@ -56,18 +73,38 @@ function isWithinRange (foundChallege: Challenge, challengeDTO :ChallengeDTO) {
     foundChallege.timeStamp > timeSpan)
 }
 
+function findChallengesQuery (challengeDTO: ChallengeDTO) {
+    if(challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) {
+        return firestoreDatabase.collection('challenges')
+        .where('type', '==' , challengeDTO.type)
+        .where('duration','==', challengeDTO.duration)
+        .where('accepted', '==', false)
+        .where('amount', '==',  challengeDTO.amount.amount)
+        .where('currency', '==', challengeDTO.amount.currency)
+        .limit(30).get();
+    } else {
+        return firestoreDatabase.collection('challenges')
+        .where('type', '==' , challengeDTO.type)
+        .where('duration','==', challengeDTO.duration)
+        .where('accepted', '==', false)
+        .limit(30).get();
+    }
+}
+
 // TODO Break Fuunction into smaller readable Chanks
 export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Function) => {
+
+    /**
+     * If of type Bet Online then check for funds after fetching service account
+     * PaymentsApi.checkForFunds(serviceAccount.accountId)
+     */
+
     // Create A Matchable Account Before Finding a challenge
     await createMatchableAccount(challengeDTO);
 
     let referenceCounter = 0;
     const challengeRefs = new Array<FirebaseFirestore.DocumentReference>();
-    const snapshot = await firestoreDatabase.collection('challenges')
-    .where('type', '==' , challengeDTO.type)
-    .where('duration','==', challengeDTO.duration)
-    .where('accepted', '==', false)
-    .limit(30).get();
+    const snapshot = await findChallengesQuery(challengeDTO);
 
     // Initialize challenge refs array
     snapshot.forEach(result => {
