@@ -25,14 +25,7 @@ export interface AccountService{
     status: string;
     owner: string;
     elo_rating:number;
-    last_matchable_time: number;
-    last_match_type: MatchType;
-    last_match_duration: number;
-    last_match_amount: Amount;
-    matched: boolean;
     matches: Array<MatchDetailsService>;
-    current_challenge_id:string;
-    current_challenge_timestamp: number;
 }
 
 interface MatchableAccountService{
