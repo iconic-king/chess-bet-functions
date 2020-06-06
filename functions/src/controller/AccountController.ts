@@ -19,10 +19,11 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
             // Fetch Account
             const phoneNumber = user.phoneNumber.replace('+','');
             const account = await getServiceAccountByPhoneNumber(phoneNumber);
-            let serviceAccount = new ServiceAccount();
-            serviceAccount.userId = user.uid;
-            serviceAccount.phoneNumber = phoneNumber;
-            serviceAccount.name = phoneNumber;
+            let serviceAccount = <ServiceAccount> {
+                name : phoneNumber,
+                phoneNumber : phoneNumber,
+                userId : user.uid,
+            };
             if(account) {
                 serviceAccount.accountId = account.accountId;
                 await createServiceAccount(serviceAccount);
