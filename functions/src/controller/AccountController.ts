@@ -17,11 +17,12 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
         // Handle Service Account Creation
         if(user.phoneNumber) {
             // Fetch Account
-            const account = await getServiceAccountByPhoneNumber(user.phoneNumber);
+            const phoneNumber = user.phoneNumber.replace('+','');
+            const account = await getServiceAccountByPhoneNumber(phoneNumber);
             let serviceAccount = new ServiceAccount();
             serviceAccount.userId = user.uid;
-            serviceAccount.phoneNumber = user.phoneNumber;
-            serviceAccount.name = user.phoneNumber;
+            serviceAccount.phoneNumber = phoneNumber;
+            serviceAccount.name = phoneNumber;
             if(account) {
                 serviceAccount.accountId = account.accountId;
                 await createServiceAccount(serviceAccount);
@@ -30,15 +31,15 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
                 const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
                     userId: user.uid,
                     email: "",
-                    name: user.phoneNumber,
-                    phoneNumber: user.phoneNumber
+                    name: phoneNumber,
+                    phoneNumber: phoneNumber
                 });
                 if (productAccount.id) {
                     serviceAccount = <ServiceAccount> {
                         accountId : productAccount.id,
                         email : productAccount.email,
-                        name : productAccount.name,
-                        phoneNumber : user.phoneNumber,
+                        name : phoneNumber,
+                        phoneNumber : phoneNumber,
                         userId : productAccount.userId
                     };
                     await createServiceAccount(serviceAccount);
