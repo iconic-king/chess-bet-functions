@@ -6,6 +6,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
 const {Storage} = require('@google-cloud/storage');
+
 // const serviceAccount = require('../chess-bet-creds.json');
 const path = require("path");
 const os = require("os");
@@ -13,6 +14,7 @@ const spawn = require("child-process-promise").spawn;
 const express = require('express');
 const cors = require('cors');
 const app = express();
+
 admin.initializeApp(functions.config().firebase);
 /**
  *  Server Initialization Functions
@@ -37,8 +39,12 @@ import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './cont
 import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
-export const onUserCreated = functions.auth.user().onCreate((user) => {
-    createUserAccountImplementation(user);
+export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+    try {
+        await createUserAccountImplementation(user);
+    } catch(error) {
+        console.error(error);
+    }
 });
 
 /** User Account Deletion */

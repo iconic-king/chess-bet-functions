@@ -28,6 +28,7 @@
     "firebase-functions": "^3.3.0",
     "firebase-queue": "^1.6.1",
     "firesql": "^2.0.2",
+    "google-auth-library": "^6.0.1",
     "nodemailer": "^6.4.6",
     "ntp-time-sync": "^0.1.0",
     "request": "^2.88.2",
