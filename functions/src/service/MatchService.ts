@@ -1,4 +1,6 @@
 import { Alliance } from "../domain/Alliance"
+import { Amount } from "./AccountService"
+import { MatchType } from "../domain/MatchType"
 
 export enum MatchStatus {
     DRAW = 'DRAW',
@@ -13,6 +15,8 @@ export interface MatchResult {
     matchStatus: MatchStatus;
     gain: string;
     loss: string;
+    matchType: MatchType;
+    amount: Amount | null;
     gainName: string,
     lossName: string,
     pgnText: string
