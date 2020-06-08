@@ -10,52 +10,53 @@ import { ServiceAccount, ProductAccount, ServiceAccountDTO } from '../domain/Ser
 import { PaymentsApi } from '../api/PaymentsApi';
 
 export  const createUserAccountImplementation = async (user : auth.UserRecord) =>  {
-    if(user.phoneNumber) {
-        // Fetch Account
+    let phoneNumber;
+    if(!user.email && user.phoneNumber) {
+        phoneNumber = user.phoneNumber.replace('+','');
+        user.email =  phoneNumber;
+    }
+    const snapshot = await getUserByEmail(user);
+    if(snapshot.size === 0){
         await createUser(user)
-        await createUserAccount(user.uid);
-        const phoneNumber = user.phoneNumber.replace('+','');
-        const account = await getServiceAccountByPhoneNumber(phoneNumber);
-        let serviceAccount = <ServiceAccount> {
-            name : phoneNumber,
-            phoneNumber : phoneNumber,
-            userId : user.uid,
-        };
-        if(account) {
-            serviceAccount.accountId = account.accountId;
-            await createServiceAccount(serviceAccount);
-        } else {
-            // Create Account In Payments Service
-            const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
-                userId: user.uid,
-                email: "",
-                name: phoneNumber,
-                phoneNumber: phoneNumber
-            });
-            if (productAccount.id) {
-                serviceAccount = <ServiceAccount> {
-                    accountId : productAccount.id,
-                    email : productAccount.email,
-                    name : phoneNumber,
-                    phoneNumber : phoneNumber,
-                    userId : productAccount.userId
-                };
+        await createUserAccount(user.uid)
+        // Handle Service Account Creation
+        if(phoneNumber) {
+            // Fetch Account
+            const account = await getServiceAccountByPhoneNumber(phoneNumber);
+            let serviceAccount = <ServiceAccount> {
+                name : phoneNumber,
+                phoneNumber : phoneNumber,
+                userId : user.uid,
+            };
+            if(account) {
+                serviceAccount.accountId = account.accountId;
                 await createServiceAccount(serviceAccount);
             } else {
-                throw new Error("Payments Service Encountered Error")
+                // Create Account In Payments Service
+                const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
+                    userId: user.uid,
+                    email: "",
+                    name: phoneNumber,
+                    phoneNumber: phoneNumber
+                });
+                if (productAccount.id) {
+                    serviceAccount = <ServiceAccount> {
+                        accountId : productAccount.id,
+                        email : productAccount.email,
+                        name : phoneNumber,
+                        phoneNumber : phoneNumber,
+                        userId : productAccount.userId
+                    };
+                    await createServiceAccount(serviceAccount);
+                } else {
+                    throw new Error("Payments Service Encountered Error")
+                }
             }
         }
-    } else if (user.email) {
-        const snapshot = await getUserByEmail(user);
-        if(snapshot.size === 0){
-            // Handle Service Account Creation
-            await createUser(user)
-            await createUserAccount(user.uid);
-            console.log("User Created Succesfully");
-        } else {
-            // TODO reconsider removng this block
-            throw new Error("User Account Exists");
-        }
+        console.log("User Created Succesfully");
+    } else {
+        // TODO reconsider removng this block
+        throw new Error("User Account Exists");
     }
 }
 
