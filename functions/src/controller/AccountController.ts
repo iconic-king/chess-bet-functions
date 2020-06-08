@@ -4,12 +4,51 @@ import { removeMatchable } from '../repository/MatchRepository';
 import { UserService } from '../service/AccountService';
 import { Response, Request } from 'firebase-functions';
 import { UserPermissionDTO } from '../domain/UserPermissionDTO';
+import { getServiceAccountByPhoneNumber, createServiceAccount} from '../repository/PaymentsRepository';
+
+import { ServiceAccount, ProductAccount, ServiceAccountDTO } from '../domain/ServiceAccount';
+import { PaymentsApi } from '../api/PaymentsApi';
 
 export  const createUserAccountImplementation = async (user : auth.UserRecord) =>  {
     const snapshot = await getUserByEmail(user);
     if(snapshot.size === 0){
         await createUser(user)
         await createUserAccount(user.uid)
+        // Handle Service Account Creation
+        if(user.phoneNumber) {
+            // Fetch Account
+            const phoneNumber = user.phoneNumber.replace('+','');
+            const account = await getServiceAccountByPhoneNumber(phoneNumber);
+            let serviceAccount = <ServiceAccount> {
+                name : phoneNumber,
+                phoneNumber : phoneNumber,
+                userId : user.uid,
+            };
+            if(account) {
+                serviceAccount.accountId = account.accountId;
+                await createServiceAccount(serviceAccount);
+            } else {
+                // Create Account In Payments Service
+                const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
+                    userId: user.uid,
+                    email: "",
+                    name: phoneNumber,
+                    phoneNumber: phoneNumber
+                });
+                if (productAccount.id) {
+                    serviceAccount = <ServiceAccount> {
+                        accountId : productAccount.id,
+                        email : productAccount.email,
+                        name : phoneNumber,
+                        phoneNumber : phoneNumber,
+                        userId : productAccount.userId
+                    };
+                    await createServiceAccount(serviceAccount);
+                } else {
+                    throw new Error("Payments Service Encountered Error")
+                }
+            }
+        }
         console.log("User Created Succesfully");
     } else {
         // TODO reconsider removng this block
