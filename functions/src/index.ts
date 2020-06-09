@@ -66,7 +66,7 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
         });
         return status;
     }
-    return status;
+    return false;
 });
 
 /**
