@@ -136,4 +136,3 @@ export const deleteUserAccount = (uid: string) =>{
     console.error(error);
   });
 }
-
