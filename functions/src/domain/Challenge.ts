@@ -1,11 +1,14 @@
 import { MatchType } from "./MatchType";
+import { Amount } from "../service/AccountService";
 
 /**
  * Challenge Types Identifies the challenge reciver
  */
 export enum Type {
     FRIENDLY = 'FRIENDLY',
-    CHALLENGE = 'CHALLENGE'
+    CHALLENGE = 'CHALLENGE',
+    BET_FRIENDLY = 'BET_FRIENDLY',
+    BET_CHALLENGE = 'BET_CHALLENGE',
 }
 
 /**
@@ -22,6 +25,8 @@ export interface Challenge {
     minEloRating: number;
     maxEloRating: number;
     type: Type;
+    amount: number;
+    currency: string;
 }
 
 export const CreateTargetChallengeFactory = (owner: string, matchType: MatchType, target: string , duration: number, type: Type) => {
@@ -35,7 +40,9 @@ export const CreateTargetChallengeFactory = (owner: string, matchType: MatchType
         eloRating: 0,
         minEloRating: 0,
         maxEloRating: 0,
-        type: type
+        type: type,
+        amount: 0,
+        currency: 'KES'
     }
 }
 
@@ -50,6 +57,8 @@ export interface TargetedChallenge {
     timeStamp: number;
     dateCreated: string;
     users: Array<string>; // Used to fetch queries collectively
+    amount: number;
+    currency: string;
 }
 
 export enum ChallengeResponse {
@@ -64,5 +73,5 @@ export enum ChallengeResponse {
  */
 export class ChallengeDTO{
     constructor(public owner:string, public duration: number,
-        public eloRating: number, public type: Type, public minEloRating: number, public maxEloRating: number){}
+        public eloRating: number, public type: Type, public minEloRating: number, public maxEloRating: number, public amount: Amount){}
 }

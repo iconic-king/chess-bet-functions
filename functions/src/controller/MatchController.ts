@@ -6,12 +6,11 @@
  * -> replaced .then callbacks with async await
  */
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
+import { AccountService ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
 import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { MatchResult, MatchStatus } from '../service/MatchService';
-import { MatchTask, addTaskToQueue } from './MatchQueue';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
 
 export const createMatchabableAccountImplementation = async (res : Response, req: Request) => {
@@ -25,48 +24,6 @@ export const createMatchabableAccountImplementation = async (res : Response, req
         console.log(error.message);
     }
 } 
-
-export const createMatchOnEloRatingImplementation = async (res : Response, req: Request) => {
-        try {
-            let snapshot = await getUserAccount(req.query.uid).get();
-            if(snapshot.size !== 0){
-                try{
-                    const matcher = <AccountService>snapshot.docs[0].data();                
-                    let range : MatchRange;
-
-                    if(req.query.start_at === undefined || req.query.end_at === undefined){
-                        range = {
-                            start_at: 100,
-                            end_at:100
-                        }
-                    } else {
-                        range = {
-                            start_at: parseInt(req.query.start_at),
-                            end_at:parseInt(req.query.end_at)
-                        }
-                    }
-                    const task: MatchTask = {
-                        match_range: range,
-                        matcher : matcher,
-                    };
-                    addTaskToQueue(task, function (status: number) {
-                        if(status === 0){
-                            res.status(200).send(matcher);
-                        }
-                        else {
-                            // Send forbidden request
-                            res.status(403).send(matcher);
-                        }
-                    });
-                }catch(exception){
-                    res.status(403).send("Forbidden");
-                }
-            }
-        } catch(error) {
-            console.log(error.message);
-            res.status(403).send("Forbidden");
-        }
-}
 
 function expectedScore (rating: number, opponent_rating:number) : number {
     return 1 / (1 + (Math.pow(10, (opponent_rating - rating)/ 400)));
@@ -132,10 +89,23 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         const accountTwoSnapshot =  await getUserAccount(matchResult.loss).get();
         account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
         exchangePoints(account_one, account_two, matchResult);
+
+        // Get Service Accounts
+
+        // const gainAccount = await getServiceAccountByUserId(matchResult.gain);
+        // const lossAccount = await getServiceAccountByUserId(matchResult.loss); 
+
+        /**
+         * Handle Payments
+         * eg PaymentsApi.transferBettingFunds(lossAccount.accountId, gainAccount.accountId, match_result.amount);
+         */
+
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
             const match = <MatchService> matchSnaphot.val();
             const match_details: MatchDetailsService = {
+                amount: matchResult.amount,
+                dateCreated: new Date().toLocaleString(),
                 match_result : matchResult,
                 match_type : match.match_type,
                 players : [
@@ -192,25 +162,29 @@ export const forceEvaluateMatch = async (req,res) => {
     const matchId = req.body;
 
     try {
-        let snapshot = await getMatch(matchId);
+        const snapshot = await getMatch(matchId);
         if(snapshot.exists()){
-            const match = <MatchService> snapshot.val();
-            const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-            ? match.players.WHITE.owner : match.players.BLACK.owner; 
-            const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-            ? match.players.BLACK.owner : match.players.WHITE.owner; 
-        
-            const matchResult: MatchResult = {
-            pgnText : match.players.WHITE.pgn,   
-            matchId : snapshot.key || '',
-            matchStatus: MatchStatus.ABANDONMENT,
-            gain: gain,
-            loss: loss,
-            _id: snapshot.key || ''
-            }
-            // tslint:disable-next-line: no-floating-promises
-            await evaluateAndStoreMatch(matchResult); 
-            res.status(200).send();
+        const match = <MatchService> snapshot.val();
+        const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+        ? match.players.WHITE.owner : match.players.BLACK.owner; 
+        const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+        ? match.players.BLACK.owner : match.players.WHITE.owner; 
+    
+        const matchResult: MatchResult = {
+          gainName: gain,
+          lossName: loss,
+          pgnText : match.players.WHITE.pgn,   
+          matchId : snapshot.key || '',
+          matchStatus: MatchStatus.ABANDONMENT,
+          amount: null,
+          matchType: match.match_type,
+          gain: gain,
+          loss: loss,
+          _id: snapshot.key || ''
+        }
+        // tslint:disable-next-line: no-floating-promises
+        await evaluateAndStoreMatch(matchResult); 
+        res.status(200).send();
         }
     } catch(error) {
         console.error(error);

@@ -13,6 +13,14 @@ export const getServiceAccountByUserId = async (userId: string) => {
     return null;
 }
 
+export const getServiceAccountByPhoneNumber = async (phoneNumber: string) => {
+    const accountsSnapshot = await firestoreDatabase.collection(serviceAccountCollection).where('phoneNumber', '==', phoneNumber).get();
+    if(!accountsSnapshot.empty){
+        return <ServiceAccount> accountsSnapshot.docs[0].data();
+    }
+    return null;
+}
+
 export const createServiceAccount = async (serviceAccount: ServiceAccount) => {
     const account = await getServiceAccountByUserId(serviceAccount.userId);
     console.log(account);

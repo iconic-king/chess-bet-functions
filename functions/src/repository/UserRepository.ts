@@ -1,6 +1,5 @@
 import * as admin from 'firebase-admin';
 import { AccountService,AccountEvent, UserService, Permission } from '../service/AccountService';
-import { MatchType } from '../domain/MatchType';
 /**
  * @author Collins Magondu
  */
@@ -34,16 +33,6 @@ export const createUserAccount =  (uid:string) => {
     elo_rating : MIN_ELO_RATING ,
     owner : uid,
     matches:[],
-    last_match_amount : {
-      currency: 'KES',
-      amount: 0.00
-    },
-    last_match_duration: 0, // Minutes
-    last_match_type: MatchType.NO_TYPE,
-    last_matchable_time: 0,
-    matched : false,
-    current_challenge_id: '',
-    current_challenge_timestamp: 0
   }
   return firestoreDatabase.collection("accounts").add(account);
 }
@@ -79,22 +68,15 @@ export const updateUser = (user: UserService) => {
   return firestoreDatabase.collection("users").doc(user.uid).set(user);
 }
 
-export const updateUserPermissions = async (uid, successCallBack,  errorCallback, permissions: Array<Permission>) => {
- 
-  try {
-    let snapshot = await getUserByUID(uid);
+export const updateUserPermissions = async (uid: string, permissions: Array<Permission>) => {
+    const snapshot = await getUserByUID(uid);
     const user = <UserService> snapshot.docs[0].data();
     user.permissions = (user.permissions === undefined) ? new Array() : user.permissions; 
     permissions.forEach(permission => {
       user.permissions.push(permission);
     });
     await updateUser(user);
-    successCallBack();
-  } catch(error){
-    console.log(error);
-    errorCallback();
-  }
-
+    return user;
 }
 
 export const getUserAccount = (uid:string) => {
@@ -105,7 +87,7 @@ export const updateAccount = (account: AccountService) => {
   const query = getUserAccount(account.owner);
 
   return firestoreDatabase.runTransaction( async result => {
-    let snapshot = await result.get(query);
+    const snapshot = await result.get(query);
     if(!snapshot.empty){
       const doc = snapshot.docs[0].ref;
       result.update(doc, account)
@@ -116,12 +98,12 @@ export const updateAccount = (account: AccountService) => {
 export const deleteUserAccount = async (uid: string) =>{
 
   try {
-    let snapshots = await getUserByUID(uid);
+    const snapshots = await getUserByUID(uid);
     if(!snapshots.empty){
       const doc = snapshots.docs[0];
       // Delete user account
       await doc.ref.delete();
-      let snapshot = await getUserAccount(uid).get();
+      const snapshot = await getUserAccount(uid).get();
       if(!snapshot.empty){
         const account = snapshot.docs[0];
         await account.ref.delete();

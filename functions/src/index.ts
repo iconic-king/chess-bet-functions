@@ -13,6 +13,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
 const {Storage} = require('@google-cloud/storage');
+
 // const serviceAccount = require('../chess-bet-creds.json');
 const path = require("path");
 const os = require("os");
@@ -20,6 +21,7 @@ const spawn = require("child-process-promise").spawn;
 const express = require('express');
 const cors = require('cors');
 const app = express();
+
 admin.initializeApp(functions.config().firebase);
 /**
  *  Server Initialization Functions
@@ -41,11 +43,15 @@ import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation, getActiveUserTournamentsImplementation } from './controller/TournamentController';
 import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
+import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
 
-
-export const onUserCreated = functions.auth.user().onCreate((user) => {
-    createUserAccountImplementation(user);
+export const onUserCreated = functions.auth.user().onCreate(async (user) => {
+    try {
+        await createUserAccountImplementation(user);
+    } catch(error) {
+        console.error(error);
+    }
 });
 
 /** User Account Deletion */
@@ -58,14 +64,14 @@ export const onUserDeleted = functions.auth.user().onDelete((user) => {
  *  Attempts to listener to any update on a challenge in order to set a match
  * */ 
 
-export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite((snap, context) => {
+export const onChallengeAccepted = functions.firestore.document('challenges/{challengeId}').onWrite(async (snap, context) => {
     const challenge = <Challenge> snap.after.data();
     if(challenge.accepted){
         // Handle set up of match
-        setUpMatch(challenge.owner, challenge.requester, challenge.matchType, () => {
+        const status = await setUpMatch(challenge.owner, challenge.requester, challenge.matchType, () => {
             console.log("Match created : ", challenge);
         });
-        return true;
+        return status;
     }
     return false;
 });
@@ -99,6 +105,14 @@ app.post('/forceEvaluateMatch', verifyToken, (req,res) => {
     onRandomChallengeRecieved(req, res);
  });
 
+ app.get('/timeStamp', async (req, res) => {
+     try {
+        const time = <NTPTime> await NTPApi.getTime();
+        res.status(200).send(time);
+     } catch (error) {
+         res.status(403).send({err: error});
+     }
+ })
 
  app.post('/challenge/sendTargetedChallenge', verifyToken, (req, res) => {
     onTargetedChallengeReceived(req, res);

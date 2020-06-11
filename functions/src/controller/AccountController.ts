@@ -4,30 +4,64 @@ import { removeMatchable } from '../repository/MatchRepository';
 import { UserService } from '../service/AccountService';
 import { Response, Request } from 'firebase-functions';
 import { UserPermissionDTO } from '../domain/UserPermissionDTO';
+import { getServiceAccountByPhoneNumber, createServiceAccount} from '../repository/PaymentsRepository';
 
-export const createUserAccountImplementation = async (user : auth.UserRecord) => {
+import { ServiceAccount, ProductAccount, ServiceAccountDTO } from '../domain/ServiceAccount';
+import { PaymentsApi } from '../api/PaymentsApi';
 
-    try {
-        let snapshot = await getUserByEmail(user);
-        if(snapshot.size === 0){
-            try {
-                await createUser(user);
-                await createUserAccount(user.uid);
-                console.log("user Created Successfully");
-            } catch (error){
-                console.log(error.message);
+export  const createUserAccountImplementation = async (user : auth.UserRecord) =>  {
+    let phoneNumber;
+    if(!user.email && user.phoneNumber) {
+        phoneNumber = user.phoneNumber.replace('+','');
+        user.email =  phoneNumber;
+    }
+    const snapshot = await getUserByEmail(user);
+    if(snapshot.size === 0){
+        await createUser(user)
+        await createUserAccount(user.uid)
+        // Handle Service Account Creation
+        if(phoneNumber) {
+            // Fetch Account
+            const account = await getServiceAccountByPhoneNumber(phoneNumber);
+            let serviceAccount = <ServiceAccount> {
+                name : phoneNumber,
+                phoneNumber : phoneNumber,
+                userId : user.uid,
+            };
+            if(account) {
+                serviceAccount.accountId = account.accountId;
+                await createServiceAccount(serviceAccount);
+            } else {
+                // Create Account In Payments Service
+                const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
+                    userId: user.uid,
+                    email: "",
+                    name: phoneNumber,
+                    phoneNumber: phoneNumber
+                });
+                if (productAccount.id) {
+                    serviceAccount = <ServiceAccount> {
+                        accountId : productAccount.id,
+                        email : productAccount.email,
+                        name : phoneNumber,
+                        phoneNumber : phoneNumber,
+                        userId : productAccount.userId
+                    };
+                    await createServiceAccount(serviceAccount);
+                } else {
+                    throw new Error("Payments Service Encountered Error")
+                }
             }
-        } else {
-            // TODO reconsider removng this block
-            throw new Error("User Account Exists");
         }
-    } catch (err){
-        console.error(err);
+        console.log("User Created Succesfully");
+    } else {
+        // TODO reconsider removng this block
+        throw new Error("User Account Exists");
     }
 }
 
 export const onUserAccountDeleted = async (user: auth.UserRecord) => {
-    deleteUserAccount(user.uid);
+    await deleteUserAccount(user.uid);
     await removeMatchable(user.uid);
 }
 
@@ -40,11 +74,12 @@ export const onUserUpdate = (req: Request, res: Response) => {
     });
 }
 
-export const onUserPermmissionsUpdate = (req: Request, res: Response) => {
+export const onUserPermmissionsUpdate = async (req: Request, res: Response) => {
     const userPermissionDTO  = <UserPermissionDTO> req.body;
-    updateUserPermissions(userPermissionDTO.uid, () => {
+    try {
+        await updateUserPermissions(userPermissionDTO.uid, userPermissionDTO.permissions);
         res.send(userPermissionDTO);
-    }, (error) => {
+    } catch (error) {
         res.status(403).send(error);
-    }, userPermissionDTO.permissions);
+    }
 }

@@ -2,6 +2,7 @@ import { MatchType } from "../domain/MatchType";
 import { MatchResult } from "./MatchService";
 import { Alliance } from "../domain/Alliance";
 
+
 export interface UserService{
     email: string | undefined,
     uid: string,
@@ -24,14 +25,7 @@ export interface AccountService{
     status: string;
     owner: string;
     elo_rating:number;
-    last_matchable_time: number;
-    last_match_type: MatchType;
-    last_match_duration: number;
-    last_match_amount: Amount;
-    matched: boolean;
     matches: Array<MatchDetailsService>;
-    current_challenge_id:string;
-    current_challenge_timestamp: number;
 }
 
 interface MatchableAccountService{
@@ -49,7 +43,9 @@ export interface Amount {
     amount: number;
 }
 // Match interface should be PGN and FEN compatible
-export interface MatchService{
+
+// TODO: Add promoted peice
+export interface MatchService {
     match_type : MatchType,
     players : {
       BLACK : {
@@ -58,7 +54,7 @@ export interface MatchService{
          to: number;
          pgn: string;
          gameTimeLeft: number; // Usefull in controlling the timer
-         events : Array<MatchEvent> ;
+         events : Array<MatchEvent>;
       }
       WHITE :{
         owner :string
@@ -86,6 +82,8 @@ export interface MatchDetailsService {
     match_type: MatchType;
     match_result: MatchResult; 
     players : Array<Player>;
+    dateCreated: string;
+    amount: Amount | null;
     matchPgn: string; //Match PGN String
 }
 
@@ -111,7 +109,7 @@ export class MatchableAccount implements MatchableAccountService {
     }
 }
 
-export class MatchablePlayOnlineAccount extends MatchableAccount { 
+export class MatchablePlayOnlineAccount extends MatchableAccount {
 }
 
 
@@ -119,14 +117,25 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount {
     opponent : string;
     opponentId: string;
     matchId: string;
+    timeStamp: number;
     constructor (owner: string,matchable :boolean, matched :boolean,
         elo_rating: number,match_type: MatchType,online:boolean,
-        opponent: string, matchId: string, duration: number, opponentId: string){
+        opponent: string, matchId: string, duration: number, opponentId: string, timeStamp: number){
             super(owner, matchable, matched, elo_rating, match_type, online, duration);
             this.matchId = matchId;
             this.opponent = opponent;
             this.opponentId = opponentId;
+            this.timeStamp = timeStamp;
         }
+}
+
+
+export class MatchableBetOnlineAccount extends MatchableAccount {
+    public amount!: Amount;
+}
+
+export class MatchedBetOnlineAccount extends MatchedPlayOnlineAccount {
+    public amount!: Amount;
 }
 
 /**
@@ -147,7 +156,6 @@ export class MatchedPlayOnlineTournamentAccount extends MatchedPlayOnlineAccount
     public result!: string;
     public sidePlayed!: Alliance;
     public isForTournament = true
-    public timeStamp: number | undefined;
     public createdByUID : string | undefined;
     public tournamentId: string  | undefined;
     public email: string | undefined; // Used for notification of a match 
