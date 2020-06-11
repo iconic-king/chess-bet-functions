@@ -9,6 +9,11 @@ const tasks_node = "tasks";
 const queueRef = admin.database().ref('evaluationQueue');
 
 /**
+ * Changes made on file (MatchQueue.ts)
+ * -> replaced .then callbacks with async await
+ */
+
+/**
  * Create match queue foe match evaluation
  */
 export function createMatchEvaluationQueue () {
@@ -33,17 +38,15 @@ export function createMatchDeletionQueue() {
         specId: 'spec_2',
         sanitize: false,
     }
-    new Queue(queueRef ,options, (data, progress,resolve,reject) => {
+    new Queue(queueRef ,options, async (data, progress,resolve,reject) => {
         const matchResult = <MatchResult> data;
-        matchesReference.child(matchResult.matchId).remove().then(()=>{
-            removeTask(matchResult._id).then(()=>{
-                resolve();
-            }).catch(()=>{
-                reject();
-            })
-            }).catch(()=> {
-                reject();
-            });
+        try {
+            await matchesReference.child(matchResult.matchId).remove();
+            await removeTask(matchResult._id);
+            resolve();
+        } catch(error) {
+            reject();
+        }
     });
     console.log("MATCH DELETION QUEUE CREATED");
 }
@@ -51,22 +54,23 @@ export function createMatchDeletionQueue() {
 /**
  * Not to be used in production env
  */
-export function addSpecs() {
-    queueRef.child("specs").set({
-        spec_1 : {
-            in_progress_state: "match_evaluation_in_progress",
-            finished_state: "match_evaluation_finished"
-        },
-        spec_2 : {
-            start_state : "match_evaluation_finished",
-            in_progress_state: "match_deletion_in_progress",
-            finished_state: "match_deletion_finished"
-        }
-    }).then(() => {
+export async function addSpecs() {
+    try {
+        await queueRef.child("specs").set({
+            spec_1 : {
+                in_progress_state: "match_evaluation_in_progress",
+                finished_state: "match_evaluation_finished"
+            },
+            spec_2 : {
+                start_state : "match_evaluation_finished",
+                in_progress_state: "match_deletion_in_progress",
+                finished_state: "match_deletion_finished"
+            }
+        });
         console.log("specs_sent");
-    }).catch(error => {
+    } catch(error) {
         console.log(error);
-    });
+    }
 }
 
 /**
@@ -74,13 +78,14 @@ export function addSpecs() {
  * @param matchTask 
  * @param callback 
  */
-export function addTaskToQueue(matchTask: MatchTask, callback) {
-    queueRef.child("tasks").push(matchTask).then(() => {
-        callback(0)
-    }).catch(error => {
-        callback(1)
+export async function addTaskToQueue(matchTask: MatchTask, callback) {
+    try {
+        await queueRef.child("tasks").push(matchTask);
+        callback(0);
+    } catch(error) {
+        callback(1);
         console.log(error);
-    });
+    }
 }
 
 

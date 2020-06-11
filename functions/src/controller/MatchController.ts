@@ -1,6 +1,10 @@
 /**
  * @author Collins Magondu
  */
+/**
+ * Changes made on file (MatchController.ts)
+ * -> replaced .then callbacks with async await
+ */
 import { Response, Request } from 'firebase-functions';
 import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
@@ -10,21 +14,21 @@ import { MatchResult, MatchStatus } from '../service/MatchService';
 import { MatchTask, addTaskToQueue } from './MatchQueue';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
 
-export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
+export const createMatchabableAccountImplementation = async (res : Response, req: Request) => {
     const matchableAccount = <MatchableAccount> req.body; // JSON  MATCHABLE OBJECT
-    setMatchableAccount(matchableAccount)
-    .then(() => {
+    try {
+        await setMatchableAccount(matchableAccount);
         // Return the account
         res.status(200).send(matchableAccount) // Ready to match
-    }).catch((error) =>{
+    } catch(error) {
         // TODO respond with relevant error
         console.log(error.message);
-    });         
+    }
 } 
 
-export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => {
-        getUserAccount(req.query.uid).get()
-        .then((snapshot) => {
+export const createMatchOnEloRatingImplementation = async (res : Response, req: Request) => {
+        try {
+            let snapshot = await getUserAccount(req.query.uid).get();
             if(snapshot.size !== 0){
                 try{
                     const matcher = <AccountService>snapshot.docs[0].data();                
@@ -58,11 +62,10 @@ export const createMatchOnEloRatingImplementation = (res : Response, req: Reques
                     res.status(403).send("Forbidden");
                 }
             }
-        })
-        .catch((error)=> {
-          console.log(error.message);
-          res.status(403).send("Forbidden");
-        });
+        } catch(error) {
+            console.log(error.message);
+            res.status(403).send("Forbidden");
+        }
 }
 
 function expectedScore (rating: number, opponent_rating:number) : number {
@@ -185,30 +188,32 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
  * @param req 
  * @param res 
  */
-export const forceEvaluateMatch = (req,res) => {
+export const forceEvaluateMatch = async (req,res) => {
     const matchId = req.body;
-    getMatch(matchId).then(async snapshot => {
+
+    try {
+        let snapshot = await getMatch(matchId);
         if(snapshot.exists()){
-        const match = <MatchService> snapshot.val();
-        const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-        ? match.players.WHITE.owner : match.players.BLACK.owner; 
-        const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
-        ? match.players.BLACK.owner : match.players.WHITE.owner; 
-    
-        const matchResult: MatchResult = {
-          pgnText : match.players.WHITE.pgn,   
-          matchId : snapshot.key || '',
-          matchStatus: MatchStatus.ABANDONMENT,
-          gain: gain,
-          loss: loss,
-          _id: snapshot.key || ''
+            const match = <MatchService> snapshot.val();
+            const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+            ? match.players.WHITE.owner : match.players.BLACK.owner; 
+            const loss = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
+            ? match.players.BLACK.owner : match.players.WHITE.owner; 
+        
+            const matchResult: MatchResult = {
+            pgnText : match.players.WHITE.pgn,   
+            matchId : snapshot.key || '',
+            matchStatus: MatchStatus.ABANDONMENT,
+            gain: gain,
+            loss: loss,
+            _id: snapshot.key || ''
+            }
+            // tslint:disable-next-line: no-floating-promises
+            await evaluateAndStoreMatch(matchResult); 
+            res.status(200).send();
         }
-        // tslint:disable-next-line: no-floating-promises
-        await evaluateAndStoreMatch(matchResult); 
-        res.status(200).send();
-        }
-    }).catch(error =>{
+    } catch(error) {
         console.error(error);
         res.status(403).send();
-    });
+    }
 }

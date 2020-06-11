@@ -8,7 +8,12 @@ import {createClubAccount, getClubAccountInfo} from '../repository/ClubRepositor
  * @param res 
  */
 
-export const createClubAccountImplementation = (req : Request, res: Response) => {
+/**
+ * Changes made on file (ClubController.ts)
+ * -> replace .then callbacks with async await
+ */
+
+export const createClubAccountImplementation = async (req : Request, res: Response) => {
   const clubAccount = <ClubAccount> req.body;
   if (clubAccount.owner) {
     // Set Created Event To Club Account
@@ -18,19 +23,23 @@ export const createClubAccountImplementation = (req : Request, res: Response) =>
     clubAccount.events = new Array();
     clubAccount.events.push(Event.CREATED);
    }
-   createClubAccount(clubAccount).then(() => {
-       res.status(200).send(clubAccount)
-       console.log("Created Club Account");
-   }).catch(error => {
-        console.log(error);
-   });
+
+   try {
+    await createClubAccount(clubAccount);
+    res.status(200).send(clubAccount)
+    console.log("Created Club Account");
+   } catch(error) {
+    console.log(error);
+   }
   }
 }
 
-export const getClubAccountInfoImplementation = (req: Request, res: Response) => {
-  getClubAccountInfo(req.query.uid, req.query.clubId).then(clubAccountInfo => {
+export const getClubAccountInfoImplementation = async (req: Request, res: Response) => {
+ 
+  try {
+    let clubAccountInfo = await getClubAccountInfo(req.query.uid, req.query.clubId);
     res.status(200).send(clubAccountInfo);
-  }).catch(error => {
+  } catch(error) {
     res.status(403).send(error);
-  });
+  }
 }

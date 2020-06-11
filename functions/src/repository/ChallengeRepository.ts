@@ -97,7 +97,7 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
     // Create A Matchable Account Before Finding a challenge
     await createMatchableAccount(challengeDTO);
 
-    let referenceCounter = 0;
+    let referenceCounter = 0; 
     const challengeRefs = new Array<FirebaseFirestore.DocumentReference>();
     const snapshot = await getPotentialChallenges(challengeDTO);
 
