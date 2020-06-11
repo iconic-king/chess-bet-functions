@@ -2,6 +2,13 @@
  * @author Collins Magondu
  */
 
+/**
+* Changes made on file (index.ts)
+    -> VerifyToken has been reimplemented as a custom express middleware
+    -> The extra check for request method has been removed entirely.
+    -> Replace .then callback pattern with async await
+*/
+
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
@@ -66,123 +73,79 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
 /**
  * Allows matches that did not end correctly to be forcefully evaluated
  */
-app.post('/forceEvaluateMatch', (req,res) => {
+app.post('/forceEvaluateMatch', verifyToken, (req,res) => {
     console.log("Request ", req.body);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST') {
-        verifyToken(req, res, ()=> {
-            // tslint:disable-next-line: deprecation
-            forceEvaluateMatch(req, res);
-        });
-    } else{
-        res.status(403).send("Forbidden");
-    }
+
+    forceEvaluateMatch(req, res);
  });
 
- app.post('/updateUserPermission', (req, res) => {
+ app.post('/updateUserPermission', verifyToken, (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST') {
-        verifyToken(req, res, ()=> {
-            onUserPermmissionsUpdate(req, res);
-        });
-    } else {
-        res.status(403).send("Forbidden");
-    }
+
+    onUserPermmissionsUpdate(req, res);
  });
 
  // Allow random challenge creation
- app.post('/challenge/randomChallenge', (req, res) => {
+ app.post('/challenge/randomChallenge', verifyToken,  (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST') {
-        verifyToken(req, res, ()=> {
-            onRandomChallengeRecieved(req, res);
-        });
-    } else {
-        res.status(403).send("Forbidden");
-    }
+
+    onRandomChallengeRecieved(req, res);
  });
 
 
- app.post('/challenge/sendTargetedChallenge', (req, res) => {
-    verifyToken(req, res, () => { 
-        onTargetedChallengeReceived(req, res);
-    });
+ app.post('/challenge/sendTargetedChallenge', verifyToken, (req, res) => {
+    onTargetedChallengeReceived(req, res);
  });
 
- app.post("/challenge/acceptTargetChallenge", (req, res) => {
-    verifyToken(req, res, () => { 
-        onTargetedChallengeAccepted(req, res);
-    });
+ app.post("/challenge/acceptTargetChallenge", verifyToken, (req, res) => {
+    onTargetedChallengeAccepted(req, res);
 })
 
- app.post('/club/createClubAccount', (req,res) => {
+ app.post('/club/createClubAccount', verifyToken, (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST') {
-        verifyToken(req, res, () => {
-            createClubAccountImplementation(req, res);
-        });
-    } else  {
-        res.status(403).send('Forbidden')
-    }
+    createClubAccountImplementation(req, res);
  });
 
- app.post("/sendFCMMessage", (req, res) => {
+ app.post("/sendFCMMessage", verifyToken, (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST') {
-        verifyToken(req, res, ()=> {
-            // tslint:disable-next-line: no-floating-promises
-            sendFCMMessage(req, res);
-        }); 
-    } else{
-        res.status(403).send("Forbidden");
-    }
+    sendFCMMessage(req, res);
  });
 
- app.get("/club/getClubAccountDetails", (req, res) => {
+ app.get("/club/getClubAccountDetails", verifyToken, (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    verifyToken(req, res, ()=> {
-        getClubAccountInfoImplementation(req, res);
-    }); 
+    getClubAccountInfoImplementation(req, res);
  });
 
 
- app.post("/assignment/mark", (req, res) => {
+ app.post("/assignment/mark", verifyToken, (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    verifyToken(req, res, ()=> {
-        markAssignmentImplementation(req, res);
-    });
+    markAssignmentImplementation(req, res);
  });
 
 /**
  * This function is used to create a matchable account
  */
 
- app.post('/createUserMatchableAccount',(req,res) => {
+ app.post('/createUserMatchableAccount', verifyToken, (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST'){
-      verifyToken(req, res, ()=> {
-        createMatchabableAccountImplementation(res, req);
-      });
-    }
-    else{
-        res.status(403).send("Forbidden");
-    }
+    createMatchabableAccountImplementation(res, req);
 });
 
 // ----------------------------- ACCOUNT SERVICE END ----------------------------------------------
@@ -203,20 +166,16 @@ app.post('/addSpecs', (req,res) => {
     }
 });
 
-app.post('/evaluateMatch', (req, res) =>{
+app.post('/evaluateMatch', verifyToken, async (req, res) =>{
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    if(req.method === 'POST'){
-        const matchResult = <MatchResult> req.body;      
-        verifyToken(req, res, async ()=> {
-                const result = await evaluateAndStoreMatch(matchResult);
-                if(result) {
-                    res.status(200).send(result);
-                } else {
-                    res.status(503).send({err : 'Evaluation did not take place'});
-                }
-        });
+    const matchResult = <MatchResult> req.body;
+    const result = await evaluateAndStoreMatch(matchResult);
+    if(result) {
+        res.status(200).send(result);
+    } else {
+        res.status(503).send({err : 'Evaluation did not take place'});
     }
 });
 
@@ -225,33 +184,26 @@ app.post('/evaluateMatch', (req, res) =>{
 
 // ----------------------------- TOURNAMENT SERVICE START ------------------------------------------------
 
-app.post('/tournament/validate',(req, res) => {
-    verifyToken(req, res, () => {
+app.post('/tournament/validate', verifyToken, (req, res) => {
     // tslint:disable-next-line: no-floating-promises
     validateTournamentImplementation(req, res);
-    })
+
 });
 
-app.post('/tournament/pair',(req, res) => {
-    verifyToken(req, res, () => {
-        // tslint:disable-next-line: no-floating-promises
-        getTournamentParingsImplementation(req, res);
-    })
+app.post('/tournament/pair', verifyToken, (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getTournamentParingsImplementation(req, res);
 });
 
 
-app.post('/tournament/createTournament', (req, res) =>  {
-    verifyToken(req, res, () => {
-        // tslint:disable-next-line: no-floating-promises
-        createTournamentImplementation(req, res);
-    });
+app.post('/tournament/createTournament', verifyToken, (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    createTournamentImplementation(req, res);
 });
 
-app.post('/tournament/addPlayers', (req, res) =>  {
-    verifyToken(req, res, () => {
-        // tslint:disable-next-line: no-floating-promises
-        addPlayersToTournamentImplementation(req, res);
-    });
+app.post('/tournament/addPlayers', verifyToken, (req, res) =>  {
+    // tslint:disable-next-line: no-floating-promises
+    addPlayersToTournamentImplementation(req, res);
 });
 
 app.post('/tournament/addPlayer', (req, res) =>  {
@@ -264,11 +216,9 @@ app.post('/tournament/schedule', (req, res) =>  {
     scheduleTournamentMatchesImplementation(req, res);
 });
 
-app.post('/tournament/evaluateTounamentMatch', (req, res) => {
-    verifyToken(req, res, () => {
-        // tslint:disable-next-line: no-floating-promises
-        evaluateTournamentMatchImplementation(req, res);
-    });
+app.post('/tournament/evaluateTounamentMatch', verifyToken, (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    evaluateTournamentMatchImplementation(req, res);
 });
 
 app.post('/tournament/sendNotification', (req, res) => {
@@ -330,7 +280,7 @@ app.post('/daraja/save', (req, res) => {
 // ----------------------------- PAYEMENTS SERVCIE END ------------------------------------------------
 
 // ----------------------------- STORAGE FUNCTIONS START  ----------------------------------------------
-export const resizeProfilePhotos = functions.storage.object().onFinalize(event => {
+export const resizeProfilePhotos = functions.storage.object().onFinalize( async event => {
     const bucket = event.bucket;
     const contentType = event.bucket;
     const filePath = event.name;
@@ -356,21 +306,22 @@ export const resizeProfilePhotos = functions.storage.object().onFinalize(event =
         contentType : contentType,
         isResized : true
     };
-    return newBucket.file(filePath).download({
-       destination : tmpFilePath 
-    }).then(()=> {
-        return spawn("convert", [tmpFilePath, "-resize", "200x200", tmpFilePath])
-    }).then(()=> {
+
+    try {
+        await newBucket.file(filePath).download({ destination: tmpFilePath });
+        await spawn("convert", [tmpFilePath, "-resize", "200x200", tmpFilePath]);
         try {
             newBucket.upload(tmpFilePath, {
-                destination : path.basename(filePath),
-                metadata : newMetadata
+                destination: path.basename(filePath),
+                metadata: newMetadata
             });
             console.log("Resize Done");
         } catch(error) {
             console.log(error.message);
         }
-    });
+    } catch(error) {
+        //error
+    }
 });
 // ----------------------------- STORAGE FUNCTIONS START  --------------------------------------------
 

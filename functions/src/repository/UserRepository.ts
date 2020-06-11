@@ -4,6 +4,10 @@ import { MatchType } from '../domain/MatchType';
 /**
  * @author Collins Magondu
  */
+/**
+ * Changes made on file (UserRepostiory.ts)
+ * -> Replaced .then callbacks with async await
+ */
 const firestoreDatabase = admin.firestore();
 
 export const MIN_ELO_RATING:number = 1000;
@@ -75,24 +79,23 @@ export const updateUser = (user: UserService) => {
   return firestoreDatabase.collection("users").doc(user.uid).set(user);
 }
 
-export const updateUserPermissions = (uid, successCallBack,  errorCallback, permissions: Array<Permission>) => {
-  getUserByUID(uid).then(snapshot => {
+export const updateUserPermissions = async (uid, successCallBack,  errorCallback, permissions: Array<Permission>) => {
+ 
+  try {
+    let snapshot = await getUserByUID(uid);
     const user = <UserService> snapshot.docs[0].data();
-    user.permissions = (user.permissions === undefined) ? new Array() : user.permissions;
+    user.permissions = (user.permissions === undefined) ? new Array() : user.permissions; 
     permissions.forEach(permission => {
       user.permissions.push(permission);
     });
-    updateUser(user).then(() => {
-      successCallBack();
-    }).catch((error) => {
-      errorCallback(error);
-    });
-  }).catch(error => {
+    await updateUser(user);
+    successCallBack();
+  } catch(error){
     console.log(error);
     errorCallback();
-  });
-}
+  }
 
+}
 
 export const getUserAccount = (uid:string) => {
   return firestoreDatabase.collection('accounts').where('owner',"==",uid);
@@ -100,39 +103,32 @@ export const getUserAccount = (uid:string) => {
 
 export const updateAccount = (account: AccountService) => {
   const query = getUserAccount(account.owner);
-  return firestoreDatabase.runTransaction( (result) => {
-    return result.get(query).then( (snapshot) => {
-      if(!snapshot.empty){
-        const doc = snapshot.docs[0].ref;
-        result.update(doc, account);
-      }
-    });
+
+  return firestoreDatabase.runTransaction( async result => {
+    let snapshot = await result.get(query);
+    if(!snapshot.empty){
+      const doc = snapshot.docs[0].ref;
+      result.update(doc, account)
+    }
   });
 }
 
-export const deleteUserAccount = (uid: string) =>{
-  getUserByUID(uid).then((snapshots) => {
+export const deleteUserAccount = async (uid: string) =>{
+
+  try {
+    let snapshots = await getUserByUID(uid);
     if(!snapshots.empty){
       const doc = snapshots.docs[0];
       // Delete user account
-      doc.ref.delete().then(() => {
-        getUserAccount(uid).get().then((snapshot) => {
-            if(!snapshot.empty){
-              const account = snapshot.docs[0];
-              account.ref.delete().then(() => {
-                console.log(`Deleted User ${uid} Operation Done`);       
-              }).catch(error =>{
-                console.error(error); 
-              });  
-            }
-        }).catch(error => {
-          console.error(error);
-        })
-      }).catch(error =>{
-        console.error(error);
-      })
+      await doc.ref.delete();
+      let snapshot = await getUserAccount(uid).get();
+      if(!snapshot.empty){
+        const account = snapshot.docs[0];
+        await account.ref.delete();
+        console.log(`Deleted User ${uid} Operation Done`);
+      }
     }
-  }).catch(error => {
-    console.error(error);
-  });
+  } catch(error){
+    console.log(error);
+  }
 }

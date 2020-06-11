@@ -5,27 +5,25 @@ import { UserService } from '../service/AccountService';
 import { Response, Request } from 'firebase-functions';
 import { UserPermissionDTO } from '../domain/UserPermissionDTO';
 
-export const createUserAccountImplementation = (user : auth.UserRecord) => {
-    getUserByEmail(user).then((snapshot)=>{
+export const createUserAccountImplementation = async (user : auth.UserRecord) => {
+
+    try {
+        let snapshot = await getUserByEmail(user);
         if(snapshot.size === 0){
-            createUser(user).then(()=>{
-                createUserAccount(user.uid).then(() => {
-                   console.log("User Created Succesfully");
-                }).catch((error)=>{
-                 console.log(error.message);
-                });
-            }).catch((error)=>{
-               console.log(error.message);
-            });
-        }
-        else {
+            try {
+                await createUser(user);
+                await createUserAccount(user.uid);
+                console.log("user Created Successfully");
+            } catch (error){
+                console.log(error.message);
+            }
+        } else {
             // TODO reconsider removng this block
             throw new Error("User Account Exists");
         }
-    }).catch((err)=>{
+    } catch (err){
         console.error(err);
-    });
-
+    }
 }
 
 export const onUserAccountDeleted = async (user: auth.UserRecord) => {
