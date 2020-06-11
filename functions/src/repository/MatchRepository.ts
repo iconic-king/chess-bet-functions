@@ -5,6 +5,11 @@ import { PlayerSection, SwissTournament } from '../domain/Tournament';
 import { Alliance } from '../domain/Alliance';
 import { TargetedChallenge } from '../domain/Challenge';
 
+/**
+ * Changes done on file MatchRepository.ts
+ * -> replaced .then callbacks with async await
+ */
+
 const realtimeDatabase = admin.database();
 
 const matchableReference = realtimeDatabase.ref('matchables');
@@ -76,8 +81,8 @@ export const getTournamentMatch = (matchId: string) => {
   return tournamentMatches.child(matchId).once('value');
 }
 
-// TODO Add duration and date of match creaton
-export const setUpMatch = (black:string, white:string , match_type:MatchType,callback :Function) => {
+// TODO Add duration and date of match creation
+export const setUpMatch = async (black:string, white:string , match_type:MatchType,callback :Function) => {
     const match:MatchService = {
         match_type : match_type,
         players : {
@@ -102,19 +107,16 @@ export const setUpMatch = (black:string, white:string , match_type:MatchType,cal
       }
     const matchId = matchesReference.push(match).key
     if(matchId !==null){
-           return updateMatchedAccount(white,"BLACK",matchId,black).then(()=>{
-               updateMatchedAccount(black,"WHITE",matchId,white).then(()=>{
-                console.log("Match Done ;-)");
-                callback();
-               })
-               .catch((error)=>{
-                console.log(error.message);
-               })
-           })
-           .catch((error)=>{
-            console.log(error);
-            
-           });
+           try {
+              await updateMatchedAccount(white, "BLACK", matchId, black);
+              await updateMatchedAccount(black, "WHITE", matchId, white);
+              console.log("Match Done ;-)");
+              callback();
+
+           } catch(error) {
+              console.log(error);
+           }
+           return;
     }
     return null;
 }

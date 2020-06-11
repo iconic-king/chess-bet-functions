@@ -1,6 +1,11 @@
 /**
  * @autjor Collins Magondu 26/03/2020
  */
+/**
+ * Changes made on file (ChallengeCounter.ts)
+ * -> replaced .then callbacks with async await
+ * -> attempted 1 TODO (break function into smaller readable Chanks marked on getOrSetChallenges function)
+ */
 import * as admin from 'firebase-admin';
 import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
@@ -56,18 +61,45 @@ function isWithinRange (foundChallege: Challenge, challengeDTO :ChallengeDTO) {
     foundChallege.timeStamp > timeSpan)
 }
 
-// TODO Break Fuunction into smaller readable Chanks
+function getPotentialChallenges (challengeDTO: ChallengeDTO) {
+    return firestoreDatabase.collection('challenges')
+    .where('type', '==' , challengeDTO.type)
+    .where('duration','==', challengeDTO.duration)
+    .where('accepted', '==', false)
+    .limit(30).get();
+}
+
+function getChallengeFromPotentialSet (challengeRefs: Array<FirebaseFirestore.DocumentReference>, referenceCounter: number, challengeDTO: ChallengeDTO){
+    return firestoreDatabase.runTransaction( async transaction => {
+        const ref = (challengeRefs.length !== 0) ? (challengeRefs.length  > referenceCounter 
+            ? challengeRefs[referenceCounter] : undefined) : undefined
+        if(ref){
+            const docSnapshot = await transaction.get(ref);
+            const challenge = <Challenge> <unknown> docSnapshot;
+            if(challenge && !challenge.accepted) {
+                transaction.update(ref, 'accepted', true);
+                transaction.update(ref, 'requester', challengeDTO.owner);
+                referenceCounter ++;
+                return ChallengeResponse.UPDATE;
+            } else {
+                return null;
+            }
+        } else {
+            // Set challenge if we have run out of challenges to probe
+            const challengeRef = firestoreDatabase.collection('challenges').doc(challengeDTO.owner);
+            transaction.set(challengeRef, createChallenge(challengeDTO));
+            return ChallengeResponse.CREATE;
+        }
+    });
+}
+
 export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Function) => {
     // Create A Matchable Account Before Finding a challenge
     await createMatchableAccount(challengeDTO);
 
     let referenceCounter = 0;
     const challengeRefs = new Array<FirebaseFirestore.DocumentReference>();
-    const snapshot = await firestoreDatabase.collection('challenges')
-    .where('type', '==' , challengeDTO.type)
-    .where('duration','==', challengeDTO.duration)
-    .where('accepted', '==', false)
-    .limit(30).get();
+    const snapshot = await getPotentialChallenges(challengeDTO);
 
     // Initialize challenge refs array
     snapshot.forEach(result => {
@@ -78,41 +110,22 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
     });
 
     if(challengeRefs.length === 0) {
-       setChallenge(challengeDTO).then(()=> {
-           response(ChallengeResponse.CREATE)
-       }).catch(msg=> {
-        console.error(`Error creating challenge for ${challengeDTO.owner} : `,msg); //  Log Error On Functions
-        response(ChallengeResponse.ERROR);
-    });
+        try {
+            await setChallenge(challengeDTO);
+            response(ChallengeResponse.CREATE);
+        } catch(msg) {
+            console.error(`Error creating challenge for ${challengeDTO.owner} : `,msg); //  Log Error On Functions
+            response(ChallengeResponse.ERROR);
+        }
     } else {
         // Get Challenge At This Point     
-        firestoreDatabase.runTransaction(async transaction => {
-            const ref = (challengeRefs.length !== 0) ? (challengeRefs.length  > referenceCounter 
-                ? challengeRefs[referenceCounter] : undefined) : undefined
-            if(ref){
-                const docSnapshot = await transaction.get(ref);
-                const challenge = <Challenge> <unknown> docSnapshot;
-                if(challenge && !challenge.accepted) {
-                    transaction.update(ref, 'accepted', true);
-                    transaction.update(ref, 'requester', challengeDTO.owner);
-                    referenceCounter ++;
-                    return ChallengeResponse.UPDATE;
-                } else {
-                    return null;
-                }
-            } else {
-                // Set challenge if we have run out of challenges to probe
-                const challengeRef = firestoreDatabase.collection('challenges').doc(challengeDTO.owner);
-                transaction.set(challengeRef, createChallenge(challengeDTO));
-                return ChallengeResponse.CREATE;
-            }
-            
-        }).then(data => {
+        try {
+            let data = await getChallengeFromPotentialSet(challengeRefs, referenceCounter, challengeDTO);
             response(data);
-        }).catch((msg) => {
+        } catch(msg) {
             console.error(`Error accepting challenge for ${challengeDTO.owner} : `,msg); //  Log Error On Functions
             response(ChallengeResponse.ERROR);
-        });
+        }
     }
 };
 
