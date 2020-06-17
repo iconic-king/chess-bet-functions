@@ -41,7 +41,7 @@ import { MatchResult } from './service/MatchService';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation, getActiveUserTournamentsImplementation } from './controller/TournamentController';
-import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation, withDrawAmountImplementation } from './controller/PaymentsContoller';
+import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation, withDrawAmountImplementation, getTransactionsImplementation, getTransactionsByTypeImplementation } from './controller/PaymentsContoller';
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
 import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
@@ -293,6 +293,16 @@ app.get('/payments/serviceAccount', (req, res) => {
 app.post('/daraja/save', (req, res) => {
     // tslint:disable-next-line: no-floating-promises
     initiateDarajaPaymentImplementation(req, res);
+});
+
+app.get('/transactions/:phoneNumber', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getTransactionsImplementation(req, res);
+});
+
+app.get('/transactions/:phoneNumber/:type', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    getTransactionsByTypeImplementation(req, res);
 })
 
 // ----------------------------- PAYEMENTS SERVCIE END ------------------------------------------------

@@ -5,6 +5,7 @@ import { SavingsDTO } from "../domain/SavingsDTO";
 import { BetDTO } from "../domain/BetDTO";
 import { BetSettlementDTO } from "../domain/BetSettlementDTO";
 import { PayoutDTO } from "../domain/PayoutDTO";
+import { TransactionType } from "../domain/Transaction";
 
 const functions = require('firebase-functions');
 
@@ -65,13 +66,13 @@ export class PaymentsApi {
         return createPostRequestPromise(options);
     }
 
-    // public static getTransactionsByType(phoneNumber: string, type: TransactionType) {
-    //     const url = `${functions.config().payments.link}/account/transactionsByType?phoneNumber=${phoneNumber}&type=${type}`;
-    //     return createGetRequestPromise(url);
-    // }
+    public static getTransactionsByType(phoneNumber: string, type: TransactionType) {
+        const url = `${functions.config().payments.link}/account/transactionsByType?phoneNumber=${phoneNumber}&type=${type}`;
+        return createGetRequestPromise(url);
+    }
 
-    // public static getTransactionsByPhoneNumber(phoneNumber: string) {
-    //     const url = `${functions.config().payments.link}/account/transactionsByPhoneNumber?phoneNumber=${phoneNumber}`;
-    //     return createGetRequestPromise(url);
-    // }
+    public static getTransactionsByPhoneNumber(phoneNumber: string) {
+        const url = `${functions.config().payments.link}/account/transactionsByPhoneNumber?phoneNumber=${phoneNumber}`;
+        return createGetRequestPromise(url);
+    }
 }

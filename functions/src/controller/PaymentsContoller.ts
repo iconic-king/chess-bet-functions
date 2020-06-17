@@ -4,6 +4,7 @@ import { PaymentsApi } from '../api/PaymentsApi';
 import { createServiceAccount, getServiceAccountByUserId } from '../repository/PaymentsRepository';
 import { SavingsDTO } from '../domain/SavingsDTO';
 import { PayoutDTO } from '../domain/PayoutDTO';
+import { TransactionType } from '../domain/Transaction';
 
 export const createServiceAccountImplementation = async (req: Request, res: Response) => {
     try {
@@ -78,4 +79,26 @@ export const withDrawAmountImplementation = async (req: Request, res: Response) 
         res.status(403).send({err : error});
     }
     res.status(403).send({err : 'Invalid Request'});
+}
+
+export const getTransactionsImplementation = async (req: Request, res: Response) => {
+    try {
+        const phoneNumber = req.params.phoneNumber;
+        let transactions = await PaymentsApi.getTransactionsByPhoneNumber(phoneNumber);
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(403).send({err : error});
+    }
+}
+
+export const getTransactionsByTypeImplementation = async (req: Request, res: Response) => {
+    try {
+        const phoneNumber = req.params.phoneNumber;
+        const type = <TransactionType> req.params.type;
+
+        let transactions = await PaymentsApi.getTransactionsByType(phoneNumber, type);
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(403).send({err : error});
+    }
 }
