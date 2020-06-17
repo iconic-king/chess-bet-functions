@@ -14,6 +14,10 @@ import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGet
 import { getUserByUID } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
 import { sendMessage } from '../controller/FCMController';
+import { ServiceAccount } from '../domain/ServiceAccount';
+import { getServiceAccountByUserId } from './PaymentsRepository';
+import { BetDTO } from '../domain/BetDTO';
+import { PaymentsApi } from '../api/PaymentsApi';
 
 const firestoreDatabase = admin.firestore();
 const targetedChallengesCollection = 'targeted_challenges';
@@ -91,7 +95,7 @@ function getChallengeFromPotentialSet (challengeRefs: Array<FirebaseFirestore.Do
                 transaction.update(ref, 'accepted', true);
                 transaction.update(ref, 'requester', challengeDTO.owner);
                 referenceCounter ++;
-                return ChallengeResponse.UPDATE;
+                return challenge;
             } else {
                 return null;
             }
@@ -122,13 +126,22 @@ function findChallengesQuery (challengeDTO: ChallengeDTO) {
     }
 }
 
+export const placeBet = async (challenge: Challenge)=> {
+    const servcieAccountA = <ServiceAccount> await getServiceAccountByUserId(challenge.owner);
+    const servcieAccountB = <ServiceAccount> await getServiceAccountByUserId(challenge.requester);
+    const betDTO = <BetDTO> {
+        amount: {
+            amount: challenge.amount,
+            currency: challenge.currency
+        },
+        partyA: servcieAccountA.phoneNumber,
+        partyB: servcieAccountB.phoneNumber
+    }
+    await PaymentsApi.placeBet(betDTO);
+}
+
 // TODO Break Fuunction into smaller readable Chanks
 export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Function) => {
-
-    /**
-     * If of type Bet Online then check for funds after fetching service account
-     * PaymentsApi.checkForFunds(serviceAccount.accountId)
-     */
 
     // Create A Matchable Account Before Finding a challenge
     await createMatchableAccount(challengeDTO);
@@ -156,7 +169,20 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
         // Get Challenge At This Point     
         try {
             const data = await getChallengeFromPotentialSet(challengeRefs, challengeDTO);
-            response(data);
+            if(data && data !== ChallengeResponse.CREATE) {
+                if(challengeDTO.type === Type.BET_CHALLENGE) {
+                    try {
+                        // Place bet will fail with inssuficient funds
+                         await placeBet(data);
+                         console.log(`Placed Bet For User ${data.owner} and ${data.requester}`);
+                        response(ChallengeResponse.UPDATE);
+                    } catch (error) {
+                        response(ChallengeResponse.ERROR);
+                    }
+                }
+            } else {
+                response(data);
+            }
         } catch(msg) {
             console.error(`Error accepting challenge for ${challengeDTO.owner} : `,msg); //  Log Error On Functions
             response(ChallengeResponse.ERROR);

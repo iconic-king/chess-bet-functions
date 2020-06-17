@@ -6,7 +6,7 @@ import { Response, Request } from 'firebase-functions';
 import { UserPermissionDTO } from '../domain/UserPermissionDTO';
 import { getServiceAccountByPhoneNumber, createServiceAccount} from '../repository/PaymentsRepository';
 
-import { ServiceAccount, ProductAccount, ServiceAccountDTO } from '../domain/ServiceAccount';
+import { ServiceAccount, ServiceAccountDTO, PaymentAccount } from '../domain/ServiceAccount';
 import { PaymentsApi } from '../api/PaymentsApi';
 
 export  const createUserAccountImplementation = async (user : auth.UserRecord) =>  {
@@ -33,19 +33,19 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
                 await createServiceAccount(serviceAccount);
             } else {
                 // Create Account In Payments Service
-                const productAccount = <ProductAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
+                const paymentAccount = <PaymentAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
                     userId: user.uid,
                     email: "",
                     name: phoneNumber,
                     phoneNumber: phoneNumber
                 });
-                if (productAccount.id) {
+                if (paymentAccount.id) {
                     serviceAccount = <ServiceAccount> {
-                        accountId : productAccount.id,
-                        email : productAccount.email,
+                        accountId : paymentAccount.id,
+                        email : paymentAccount.email,
                         name : phoneNumber,
                         phoneNumber : phoneNumber,
-                        userId : productAccount.userId
+                        userId : paymentAccount.userId
                     };
                     await createServiceAccount(serviceAccount);
                 } else {

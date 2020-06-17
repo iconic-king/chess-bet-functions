@@ -16,23 +16,21 @@ export interface ServiceAccountDTO {
 }
 
 export enum Status {
-    CREATED = 'CREATED',
+    ACTIVE = 'ACTIVE',
     SUSPENDED = 'SUSPENDED',
-    PAID_PREMIUM = 'PAID_PREMIUM',
-    TERMS_OF_SERVICE_ACCEPTED = 'TERMS_OF_SERVICE_ACCEPTED',
-    ACTIVATED = 'ACTIVATED'
+    PENDING = 'PENDING',
+    CLOSED = 'CLOSED'
 }
 
 /**
  * Structure data from payments
  */
-export interface ProductAccount {
+export interface PaymentAccount {
     id: number;
     userId: string,
 	email:  string,
 	name: string,
 	phoneNumber: string,
-    serviceId: number,
     balance: number;
     termsOfServiceAccepted : boolean;
     status: Status;

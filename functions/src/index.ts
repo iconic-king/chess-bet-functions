@@ -41,7 +41,7 @@ import { MatchResult } from './service/MatchService';
 import { verifyToken } from './utils/AuthUtil';
 import { sendFCMMessage } from './controller/FCMController';
 import { validateTournamentImplementation, getTournamentParingsImplementation, createTournamentImplementation, addPlayersToTournamentImplementation, scheduleTournamentMatchesImplementation, evaluateTournamentMatchImplementation, setLockedStateOfTournament, setPlayerActiveState, sendNotificationToTournamentPlayers, addPlayerToTournamentImplementation, getActiveUserTournamentsImplementation } from './controller/TournamentController';
-import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation } from './controller/PaymentsContoller';
+import { createServiceAccountImplementation, getServiceAccountImplementation, initiateDarajaPaymentImplementation, withDrawAmountImplementation } from './controller/PaymentsContoller';
 import { sendTwilioVerificationCode, verifyTwilioVerificationCode } from './controller/VerificationController';
 import { NTPApi, NTPTime } from './api/NTPApi';
 // ----------------------------- ACCOUNT SERVICE START ----------------------------------------------
@@ -78,31 +78,30 @@ export const onChallengeAccepted = functions.firestore.document('challenges/{cha
 
 /**
  * Allows matches that did not end correctly to be forcefully evaluated
+ * @deprecated
  */
-app.post('/forceEvaluateMatch', verifyToken, (req,res) => {
+app.post('/forceEvaluateMatch', verifyToken, async (req,res) => {
     console.log("Request ", req.body);
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-
-    forceEvaluateMatch(req, res);
+    // tslint:disable-next-line: deprecation
+    await forceEvaluateMatch(req, res);
  });
 
- app.post('/updateUserPermission', verifyToken, (req, res) => {
+ app.post('/updateUserPermission', verifyToken, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-
-    onUserPermmissionsUpdate(req, res);
+    await onUserPermmissionsUpdate(req, res);
  });
 
  // Allow random challenge creation
- app.post('/challenge/randomChallenge', verifyToken,  (req, res) => {
+ app.post('/challenge/randomChallenge', verifyToken,  async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-
-    onRandomChallengeRecieved(req, res);
+    await onRandomChallengeRecieved(req, res);
  });
 
  app.get('/timeStamp', async (req, res) => {
@@ -122,44 +121,44 @@ app.post('/forceEvaluateMatch', verifyToken, (req,res) => {
     onTargetedChallengeAccepted(req, res);
 })
 
- app.post('/club/createClubAccount', verifyToken, (req,res) => {
+ app.post('/club/createClubAccount', verifyToken, async (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    createClubAccountImplementation(req, res);
+    await createClubAccountImplementation(req, res);
  });
 
- app.post("/sendFCMMessage", verifyToken, (req, res) => {
+ app.post("/sendFCMMessage", verifyToken, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    sendFCMMessage(req, res);
+    await sendFCMMessage(req, res);
  });
 
- app.get("/club/getClubAccountDetails", verifyToken, (req, res) => {
+ app.get("/club/getClubAccountDetails", verifyToken, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    getClubAccountInfoImplementation(req, res);
+    await getClubAccountInfoImplementation(req, res);
  });
 
 
- app.post("/assignment/mark", verifyToken, (req, res) => {
+ app.post("/assignment/mark", verifyToken, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    markAssignmentImplementation(req, res);
+    await markAssignmentImplementation(req, res);
  });
 
 /**
  * This function is used to create a matchable account
  */
 
- app.post('/createUserMatchableAccount', verifyToken, (req,res) => {
+ app.post('/createUserMatchableAccount', verifyToken, async (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    createMatchabableAccountImplementation(res, req);
+    await createMatchabableAccountImplementation(res, req);
 });
 
 // ----------------------------- ACCOUNT SERVICE END ----------------------------------------------
@@ -171,12 +170,12 @@ app.post('/forceEvaluateMatch', verifyToken, (req,res) => {
 /**
  * Should only be used when adding a new spec before go live of a queue 
  */
-app.post('/addSpecs', (req,res) => {
+app.post('/addSpecs', async (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type"); 
     if(req.method === 'POST'){
-        addSpecs();
+        await addSpecs();
     }
 });
 
@@ -278,6 +277,11 @@ app.post('/verify/twilio/verifyCode', (req, res) =>  {
 app.post('/payments/createAccount', (req, res) => {
     // tslint:disable-next-line: no-floating-promises
     createServiceAccountImplementation(req, res);
+});
+
+app.post('/payments/withdraw', (req, res) => {
+    // tslint:disable-next-line: no-floating-promises
+    withDrawAmountImplementation(req, res);
 });
 
 app.get('/payments/serviceAccount', (req, res) => {

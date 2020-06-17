@@ -12,6 +12,10 @@ import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../re
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { MatchResult, MatchStatus } from '../service/MatchService';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
+import { getServiceAccountByUserId } from '../repository/PaymentsRepository';
+import { MatchType } from '../domain/MatchType';
+import { BetSettlementDTO } from '../domain/BetSettlementDTO';
+import { PaymentsApi } from '../api/PaymentsApi';
 
 export const createMatchabableAccountImplementation = async (res : Response, req: Request) => {
     const matchableAccount = <MatchableAccount> req.body; // JSON  MATCHABLE OBJECT
@@ -80,6 +84,10 @@ function exchangePoints(account_one: AccountService, account_two :AccountService
     }
 }
 
+/**
+ * Saves Matches In DB and evaluates bets
+ * @param matchResult
+ */
 export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
     try {
         let account_one:AccountService;
@@ -90,19 +98,34 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
         exchangePoints(account_one, account_two, matchResult);
 
-        // Get Service Accounts
-
-        // const gainAccount = await getServiceAccountByUserId(matchResult.gain);
-        // const lossAccount = await getServiceAccountByUserId(matchResult.loss); 
-
-        /**
-         * Handle Payments
-         * eg PaymentsApi.transferBettingFunds(lossAccount.accountId, gainAccount.accountId, match_result.amount);
-         */
-
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
             const match = <MatchService> matchSnaphot.val();
+            if(match.match_type === MatchType.BET_ONLINE) {
+                const gainAccount = await getServiceAccountByUserId(matchResult.gain);
+                const lossAccount = await getServiceAccountByUserId(matchResult.loss);
+
+                let betSettleMentDTO : BetSettlementDTO;
+                if(gainAccount && lossAccount) {
+                    if (matchResult.matchStatus === MatchStatus.DRAW) {
+                        betSettleMentDTO = <BetSettlementDTO> {
+                            amount : matchResult.amount,
+                            partyA: gainAccount.phoneNumber,
+                            partyB: lossAccount.phoneNumber,
+                            draw: "DRAW"
+                        }
+                    } else {
+                        betSettleMentDTO = <BetSettlementDTO> {
+                            amount : matchResult.amount,
+                            partyA: gainAccount.phoneNumber
+                        }
+                    }
+                    await PaymentsApi.settleBet(betSettleMentDTO);
+                } else {
+                    console.error('Service Accounts Not Found');
+                    return null;
+                }
+            }
             const match_details: MatchDetailsService = {
                 amount: matchResult.amount,
                 dateCreated: new Date().toLocaleString(),
@@ -149,6 +172,7 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         }
     } catch (error) {
         console.error(error);
+        return null;
     }
     return null;
 }

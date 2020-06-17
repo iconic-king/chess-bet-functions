@@ -12,7 +12,7 @@ import { Alliance } from '../domain/Alliance';
 import { DirectTransactionDTO } from '../domain/DirectTransactionDTO';
 import { getServiceAccountByUserId } from './PaymentsRepository';
 import { PaymentsApi } from '../api/PaymentsApi';
-import { ProductAccount } from '../domain/ServiceAccount';
+import { PaymentAccount } from '../domain/ServiceAccount';
 
 const firestoreDatabase = admin.firestore();
 const realtimeDB = admin.database();
@@ -161,7 +161,7 @@ export const addPlayerToTournament = async (tournamentId: string ,player: Player
                         transaction.accountId = account.accountId;
                         transaction.amount = swissTournament.amount;
                         transaction.ref = uuidv4();
-                        const productAccount = <ProductAccount> await PaymentsApi.makeDirectTransaction(transaction);
+                        const productAccount = <PaymentAccount> await PaymentsApi.makeDirectTransaction(transaction); // Make account to the organizaiton account
                         console.log(productAccount);
                         if(productAccount.id){
                             console.log(productAccount);
