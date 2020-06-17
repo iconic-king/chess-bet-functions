@@ -1,0 +1,4 @@
+export enum TransactionType {
+    TRANSACTION_CREDIT = 'TRANSACTION_CREDIT',
+    TRANSACTION_DEBIT = 'TRANSACTION_DEBIT',
+}
