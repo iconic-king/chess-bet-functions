@@ -84,7 +84,7 @@ export const withDrawAmountImplementation = async (req: Request, res: Response) 
 export const getTransactionsImplementation = async (req: Request, res: Response) => {
     try {
         const phoneNumber = req.params.phoneNumber;
-        let transactions = await PaymentsApi.getTransactionsByPhoneNumber(phoneNumber);
+        const transactions = await PaymentsApi.getTransactionsByPhoneNumber(phoneNumber);
         res.status(200).send(transactions);
     } catch (error) {
         res.status(403).send({err : error});
@@ -96,7 +96,7 @@ export const getTransactionsByTypeImplementation = async (req: Request, res: Res
         const phoneNumber = req.params.phoneNumber;
         const type = <TransactionType> req.params.type;
 
-        let transactions = await PaymentsApi.getTransactionsByType(phoneNumber, type);
+        const transactions = await PaymentsApi.getTransactionsByType(phoneNumber, type);
         res.status(200).send(transactions);
     } catch (error) {
         res.status(403).send({err : error});
