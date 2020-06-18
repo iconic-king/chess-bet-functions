@@ -131,11 +131,8 @@ export class MatchedPlayOnlineAccount extends MatchablePlayOnlineAccount {
 
 
 export class MatchableBetOnlineAccount extends MatchableAccount {
-    public amount!: Amount;
-}
-
-export class MatchedBetOnlineAccount extends MatchedPlayOnlineAccount {
-    public amount!: Amount;
+    public amount!: number;
+    public currency!: string;
 }
 
 /**

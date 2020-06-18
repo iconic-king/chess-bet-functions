@@ -44,7 +44,8 @@ async function createMatchableAccount(challengeDTO: ChallengeDTO) {
     if(challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) {
         console.log(challengeDTO.amount);
         matchableAccount = <MatchableBetOnlineAccount> {
-            amount : challengeDTO.amount,
+            amount : challengeDTO.amount.amount,
+            currency: challengeDTO.amount.currency,
             duration: challengeDTO.duration,
             date_created: Date.now().toString(),
             owner: challengeDTO.owner,
