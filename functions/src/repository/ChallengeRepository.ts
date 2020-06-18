@@ -14,7 +14,7 @@ import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGet
 import { getUserByUID } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
 import { sendMessage } from '../controller/FCMController';
-import { ServiceAccount } from '../domain/ServiceAccount';
+import { ServiceAccount, PaymentAccount } from '../domain/ServiceAccount';
 import { getServiceAccountByUserId } from './PaymentsRepository';
 import { BetDTO } from '../domain/BetDTO';
 import { PaymentsApi } from '../api/PaymentsApi';
@@ -127,21 +127,34 @@ function findChallengesQuery (challengeDTO: ChallengeDTO) {
 }
 
 export const placeBet = async (challenge: Challenge)=> {
-    const servcieAccountA = <ServiceAccount> await getServiceAccountByUserId(challenge.owner);
-    const servcieAccountB = <ServiceAccount> await getServiceAccountByUserId(challenge.requester);
+    const serviceAccountA = <ServiceAccount> await getServiceAccountByUserId(challenge.owner);
+    const serviceAccountB = <ServiceAccount> await getServiceAccountByUserId(challenge.requester);
     const betDTO = <BetDTO> {
         amount: {
             amount: challenge.amount,
             currency: challenge.currency
         },
-        partyA: servcieAccountA.phoneNumber,
-        partyB: servcieAccountB.phoneNumber
+        partyA: serviceAccountA.phoneNumber,
+        partyB: serviceAccountB.phoneNumber
     }
     await PaymentsApi.placeBet(betDTO);
 }
 
 // TODO Break Fuunction into smaller readable Chanks
 export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Function) => {
+    if(challengeDTO.type === Type.BET_CHALLENGE) {
+        const serviceOwnerAccount = <ServiceAccount> await getServiceAccountByUserId(challengeDTO.owner);
+        const paymentAccount = <PaymentAccount> JSON.parse(await PaymentsApi.getAccount(serviceOwnerAccount) as string);
+        if (challengeDTO.amount.currency !== 'USD') {
+            response(ChallengeResponse.ERROR);
+            return;
+        }        
+        
+        if(Number(paymentAccount.balance) < Number(challengeDTO.amount.amount)) {
+            response(ChallengeResponse.INSUFFICIENT_FUNDS);
+            return;
+        }
+    }
 
     // Create A Matchable Account Before Finding a challenge
     await createMatchableAccount(challengeDTO);
