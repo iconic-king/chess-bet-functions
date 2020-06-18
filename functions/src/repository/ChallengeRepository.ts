@@ -42,6 +42,7 @@ function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
 async function createMatchableAccount(challengeDTO: ChallengeDTO) {
     let matchableAccount: any;
     if(challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) {
+        console.log(challengeDTO.amount);
         matchableAccount = <MatchableBetOnlineAccount> {
             amount : challengeDTO.amount,
             duration: challengeDTO.duration,

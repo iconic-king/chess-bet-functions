@@ -97,7 +97,7 @@ app.post('/forceEvaluateMatch', verifyToken, async (req,res) => {
  });
 
  // Allow random challenge creation
- app.post('/challenge/randomChallenge', verifyToken, async (req, res) => {
+ app.post('/challenge/randomChallenge', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");

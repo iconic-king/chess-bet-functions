@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { MatchableAccount, MatchablePlayOnlineAccount, MatchService, MatchedPlayOnlineTournamentAccount, MatchedPlayOnlineAccount} from '../service/AccountService';
+import { MatchService, MatchedPlayOnlineTournamentAccount, MatchedPlayOnlineAccount} from '../service/AccountService';
 import { MatchType } from '../domain/MatchType';
 import { PlayerSection, SwissTournament } from '../domain/Tournament';
 import { Alliance } from '../domain/Alliance';
@@ -19,26 +19,8 @@ export const matchesReference = realtimeDatabase.ref('matches');
 const tournamentMatches = realtimeDatabase.ref('tournament_matches')
 const tournamentMatchables = realtimeDatabase.ref('tournament_matchables')
 
-export const setMatchableAccount =  (matchableAccount: MatchableAccount) => {
-    let matchable:MatchableAccount;
-    if(matchableAccount.match_type === MatchType.PLAY_ONLINE){ // Describes Play Online Account
-        matchable = new MatchablePlayOnlineAccount(matchableAccount.owner,
-            true,
-            false,
-            matchableAccount.elo_rating,
-            matchableAccount.match_type,
-            true, matchableAccount.duration)
-            return matchableReference.child(matchableAccount.owner).set(matchable);
-        }
-    else {
-        matchable = new MatchableAccount(matchableAccount.owner,
-            true,
-            false,
-            matchableAccount.elo_rating,
-            matchableAccount.match_type,
-            true, matchableAccount.duration)
-    }
-    return matchableReference.child(matchableAccount.owner).set(matchable);
+export const setMatchableAccount =  (matchableAccount: any) => {
+    return matchableReference.child(matchableAccount.owner).set(matchableAccount);
 }
 
 export const getMatchableAccount = (uid: string) => {
