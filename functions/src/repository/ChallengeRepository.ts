@@ -40,17 +40,17 @@ function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
 }
 
 async function createMatchableAccount(challengeDTO: ChallengeDTO) {
-    let matchableAccount: MatchableAccount;
+    let matchableAccount: any;
     if(challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) {
         matchableAccount = <MatchableBetOnlineAccount> {
             amount : challengeDTO.amount,
             duration: challengeDTO.duration,
             date_created: Date.now().toString(),
             owner: challengeDTO.owner,
-            matchable: false,
+            matchable: true,
             matched: false,
             elo_rating: challengeDTO.eloRating,
-            match_type: MatchType.PLAY_ONLINE,
+            match_type: MatchType.BET_ONLINE,
             online: false
         }
     } else  {
@@ -58,7 +58,7 @@ async function createMatchableAccount(challengeDTO: ChallengeDTO) {
             duration: challengeDTO.duration,
             date_created: Date.now().toString(),
             owner: challengeDTO.owner,
-            matchable: false,
+            matchable: true,
             matched: false,
             elo_rating: challengeDTO.eloRating,
             match_type: MatchType.PLAY_ONLINE,
