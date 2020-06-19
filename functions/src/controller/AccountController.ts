@@ -34,7 +34,6 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
             } else {
                 // Create Account In Payments Service
                 const paymentAccount = <PaymentAccount> await PaymentsApi.createAccount(<ServiceAccountDTO> {
-                    userId: user.uid,
                     email: "",
                     name: phoneNumber,
                     phoneNumber: phoneNumber
@@ -42,10 +41,10 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
                 if (paymentAccount.id) {
                     serviceAccount = <ServiceAccount> {
                         accountId : paymentAccount.id,
-                        email : paymentAccount.email,
+                        email : paymentAccount.phoneNumber,
                         name : phoneNumber,
                         phoneNumber : phoneNumber,
-                        userId : paymentAccount.userId
+                        userId : phoneNumber
                     };
                     await createServiceAccount(serviceAccount);
                 } else {
