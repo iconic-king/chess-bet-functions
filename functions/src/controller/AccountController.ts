@@ -44,7 +44,7 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
                         email : paymentAccount.phoneNumber,
                         name : phoneNumber,
                         phoneNumber : phoneNumber,
-                        userId : phoneNumber
+                        userId : user.uid
                     };
                     await createServiceAccount(serviceAccount);
                 } else {
