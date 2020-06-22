@@ -92,11 +92,12 @@ function getChallengeFromPotentialSet (challengeRefs: Array<FirebaseFirestore.Do
             ? challengeRefs[referenceCounter] : undefined) : undefined
         if(ref){
             const docSnapshot = await transaction.get(ref);
-            const challenge = <Challenge> <unknown> docSnapshot;
+            const challenge = <Challenge> docSnapshot.data();
             if(challenge && !challenge.accepted) {
                 transaction.update(ref, 'accepted', true);
                 transaction.update(ref, 'requester', challengeDTO.owner);
                 referenceCounter ++;
+                challenge.requester =  challengeDTO.owner;
                 return challenge;
             } else {
                 return null;
@@ -188,10 +189,12 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
                 if(challengeDTO.type === Type.BET_CHALLENGE) {
                     try {
                         // Place bet will fail with inssuficient funds
+                        console.log(data.accepted);
                          await placeBet(data);
                          console.log(`Placed Bet For User ${data.owner} and ${data.requester}`);
                         response(ChallengeResponse.UPDATE);
                     } catch (error) {
+                        console.error(error);
                         response(ChallengeResponse.ERROR);
                     }
                 }

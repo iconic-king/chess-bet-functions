@@ -26,7 +26,7 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
             let serviceAccount = <ServiceAccount> {
                 name : phoneNumber,
                 phoneNumber : phoneNumber,
-                userId : user.uid,
+                userId : user.uid
             };
             if(account) {
                 serviceAccount.accountId = account.accountId;
