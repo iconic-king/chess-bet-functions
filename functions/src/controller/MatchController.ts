@@ -101,20 +101,28 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
             const match = <MatchService> matchSnaphot.val();
+            // Bet Settlement
             if(match.match_type === MatchType.BET_ONLINE) {
+                /*
+                * Set the actual bet amount
+                * Client should pass the bet amount they placed and server should mutiply that by 2
+                */
+                if(matchResult.amount) {
+                    matchResult.amount.amount = matchResult.amount.amount * 2;
+                }
                 const gainAccount = await getServiceAccountByUserId(matchResult.gain);
                 const lossAccount = await getServiceAccountByUserId(matchResult.loss);
 
                 let betSettleMentDTO : BetSettlementDTO;
                 if(gainAccount && lossAccount) {
-                    if (matchResult.matchStatus === MatchStatus.DRAW) {
+                    if (matchResult.matchStatus === MatchStatus.DRAW || matchResult.matchStatus === MatchStatus.GAME_ABORTED) {
                         betSettleMentDTO = <BetSettlementDTO> {
                             amount : matchResult.amount,
                             partyA: gainAccount.phoneNumber,
                             partyB: lossAccount.phoneNumber,
                             draw: "DRAW"
                         }
-                    } else {
+                    } else{
                         betSettleMentDTO = <BetSettlementDTO> {
                             amount : matchResult.amount,
                             partyA: gainAccount.phoneNumber
