@@ -1,13 +1,15 @@
 import { Response, Request } from 'firebase-functions';
-import { ServiceAccountDTO, ServiceAccount, ProductAccount } from '../domain/ServiceAccount';
+import { ServiceAccountDTO, ServiceAccount, PaymentAccount } from '../domain/ServiceAccount';
 import { PaymentsApi } from '../api/PaymentsApi';
 import { createServiceAccount, getServiceAccountByUserId } from '../repository/PaymentsRepository';
 import { SavingsDTO } from '../domain/SavingsDTO';
+import { PayoutDTO } from '../domain/PayoutDTO';
+import { TransactionType } from '../domain/Transaction';
 
 export const createServiceAccountImplementation = async (req: Request, res: Response) => {
     try {
       const account = <ServiceAccountDTO> req.body;
-      const productAccount = <ProductAccount> await PaymentsApi.createAccount(account);
+      const productAccount = <PaymentAccount> await PaymentsApi.createAccount(account);
       if (productAccount.id) {
           console.log(productAccount);
             // After getting a servcie account back we store it in the database      
@@ -36,7 +38,7 @@ export const getServiceAccountImplementation = async (req: Request, res: Respons
             const servcieAccount = await getServiceAccountByUserId(uid);
             if (servcieAccount) {
                 // Get it from payments service
-                const account = <ProductAccount> await PaymentsApi.getAccount(servcieAccount);
+                const account = <PaymentAccount> await PaymentsApi.getAccount(servcieAccount);
                 res.status(200).send(account);
                 return;
             } else {
@@ -64,4 +66,39 @@ export const initiateDarajaPaymentImplementation = async (req: Request, res: Res
         return;
     }
     res.status(403).send({err : 'Invalid Request'});
+}
+
+
+export const withDrawAmountImplementation = async (req: Request, res: Response) => {
+    try {
+        const payoutDTO = <PayoutDTO> req.body;
+        const response = await PaymentsApi.payout(payoutDTO)
+        res.status(200).send(response);
+        return;
+    } catch (error) {
+        res.status(403).send({err : error});
+    }
+    res.status(403).send({err : 'Invalid Request'});
+}
+
+export const getTransactionsImplementation = async (req: Request, res: Response) => {
+    try {
+        const phoneNumber = req.params.phoneNumber;
+        const transactions = await PaymentsApi.getTransactionsByPhoneNumber(phoneNumber);
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(403).send({err : error});
+    }
+}
+
+export const getTransactionsByTypeImplementation = async (req: Request, res: Response) => {
+    try {
+        const phoneNumber = req.params.phoneNumber;
+        const type = <TransactionType> req.params.type;
+
+        const transactions = await PaymentsApi.getTransactionsByType(phoneNumber, type);
+        res.status(200).send(transactions);
+    } catch (error) {
+        res.status(403).send({err : error});
+    }
 }

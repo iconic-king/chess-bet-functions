@@ -1,69 +1,33 @@
 /**
  * @author Collins Magondu
  */
+/**
+ * Changes made on file (MatchController.ts)
+ * -> replaced .then callbacks with async await
+ */
 import { Response, Request } from 'firebase-functions';
-import { AccountService, MatchRange ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
+import { AccountService ,MatchService, MatchDetailsService, MatchableAccount} from '../service/AccountService';
 
 import { setMatchableAccount,getMatch, removeMatch, removeMatchable} from '../repository/MatchRepository';
 import { getUserAccount, updateAccount} from "../repository/UserRepository";
 import { MatchResult, MatchStatus } from '../service/MatchService';
-import { MatchTask, addTaskToQueue } from './MatchQueue';
 import { MatchEvaluationResponse } from '../domain/MatchEvaluationResponse';
+import { getServiceAccountByUserId } from '../repository/PaymentsRepository';
+import { MatchType } from '../domain/MatchType';
+import { BetSettlementDTO } from '../domain/BetSettlementDTO';
+import { PaymentsApi } from '../api/PaymentsApi';
 
-export const createMatchabableAccountImplementation = (res : Response, req: Request) => {
+export const createMatchabableAccountImplementation = async (res : Response, req: Request) => {
     const matchableAccount = <MatchableAccount> req.body; // JSON  MATCHABLE OBJECT
-    setMatchableAccount(matchableAccount)
-    .then(() => {
+    try {
+        await setMatchableAccount(matchableAccount);
         // Return the account
         res.status(200).send(matchableAccount) // Ready to match
-    }).catch((error) =>{
+    } catch(error) {
         // TODO respond with relevant error
         console.log(error.message);
-    });         
+    }
 } 
-
-export const createMatchOnEloRatingImplementation = (res : Response, req: Request) => {
-        getUserAccount(req.query.uid).get()
-        .then((snapshot) => {
-            if(snapshot.size !== 0){
-                try{
-                    const matcher = <AccountService>snapshot.docs[0].data();                
-                    let range : MatchRange;
-
-                    if(req.query.start_at === undefined || req.query.end_at === undefined){
-                        range = {
-                            start_at: 100,
-                            end_at:100
-                        }
-                    } else {
-                        range = {
-                            start_at: parseInt(req.query.start_at),
-                            end_at:parseInt(req.query.end_at)
-                        }
-                    }
-                    const task: MatchTask = {
-                        match_range: range,
-                        matcher : matcher,
-                    };
-                    addTaskToQueue(task, function (status: number) {
-                        if(status === 0){
-                            res.status(200).send(matcher);
-                        }
-                        else {
-                            // Send forbidden request
-                            res.status(403).send(matcher);
-                        }
-                    });
-                }catch(exception){
-                    res.status(403).send("Forbidden");
-                }
-            }
-        })
-        .catch((error)=> {
-          console.log(error.message);
-          res.status(403).send("Forbidden");
-        });
-}
 
 function expectedScore (rating: number, opponent_rating:number) : number {
     return 1 / (1 + (Math.pow(10, (opponent_rating - rating)/ 400)));
@@ -120,6 +84,10 @@ function exchangePoints(account_one: AccountService, account_two :AccountService
     }
 }
 
+/**
+ * Saves Matches In DB and evaluates bets
+ * @param matchResult
+ */
 export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
     try {
         let account_one:AccountService;
@@ -129,10 +97,46 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         const accountTwoSnapshot =  await getUserAccount(matchResult.loss).get();
         account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
         exchangePoints(account_one, account_two, matchResult);
+
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
             const match = <MatchService> matchSnaphot.val();
+            // Bet Settlement
+            if(match.match_type === MatchType.BET_ONLINE) {
+                /*
+                * Set the actual bet amount
+                * Client should pass the bet amount they placed and server should mutiply that by 2
+                */
+                if(matchResult.amount) {
+                    matchResult.amount.amount = matchResult.amount.amount * 2;
+                }
+                const gainAccount = await getServiceAccountByUserId(matchResult.gain);
+                const lossAccount = await getServiceAccountByUserId(matchResult.loss);
+
+                let betSettleMentDTO : BetSettlementDTO;
+                if(gainAccount && lossAccount) {
+                    if (matchResult.matchStatus === MatchStatus.DRAW || matchResult.matchStatus === MatchStatus.GAME_ABORTED) {
+                        betSettleMentDTO = <BetSettlementDTO> {
+                            amount : matchResult.amount,
+                            partyA: gainAccount.phoneNumber,
+                            partyB: lossAccount.phoneNumber,
+                            draw: "DRAW"
+                        }
+                    } else{
+                        betSettleMentDTO = <BetSettlementDTO> {
+                            amount : matchResult.amount,
+                            partyA: gainAccount.phoneNumber
+                        }
+                    }
+                    await PaymentsApi.settleBet(betSettleMentDTO);
+                } else {
+                    console.error('Service Accounts Not Found');
+                    return null;
+                }
+            }
             const match_details: MatchDetailsService = {
+                amount: matchResult.amount,
+                dateCreated: new Date().toLocaleString(),
                 match_result : matchResult,
                 match_type : match.match_type,
                 players : [
@@ -176,6 +180,7 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         }
     } catch (error) {
         console.error(error);
+        return null;
     }
     return null;
 }
@@ -185,9 +190,11 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
  * @param req 
  * @param res 
  */
-export const forceEvaluateMatch = (req,res) => {
+export const forceEvaluateMatch = async (req,res) => {
     const matchId = req.body;
-    getMatch(matchId).then(async snapshot => {
+
+    try {
+        const snapshot = await getMatch(matchId);
         if(snapshot.exists()){
         const match = <MatchService> snapshot.val();
         const gain = (match.players.WHITE.gameTimeLeft > match.players.WHITE.gameTimeLeft) 
@@ -196,9 +203,13 @@ export const forceEvaluateMatch = (req,res) => {
         ? match.players.BLACK.owner : match.players.WHITE.owner; 
     
         const matchResult: MatchResult = {
+          gainName: gain,
+          lossName: loss,
           pgnText : match.players.WHITE.pgn,   
           matchId : snapshot.key || '',
           matchStatus: MatchStatus.ABANDONMENT,
+          amount: null,
+          matchType: match.match_type,
           gain: gain,
           loss: loss,
           _id: snapshot.key || ''
@@ -207,8 +218,8 @@ export const forceEvaluateMatch = (req,res) => {
         await evaluateAndStoreMatch(matchResult); 
         res.status(200).send();
         }
-    }).catch(error =>{
+    } catch(error) {
         console.error(error);
         res.status(403).send();
-    });
+    }
 }

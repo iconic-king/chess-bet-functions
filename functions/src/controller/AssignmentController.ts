@@ -2,14 +2,20 @@ import { Response, Request } from 'firebase-functions';
 import { AssignmentResult, AssignmentGroup } from '../domain/Assignment';
 import { getAssignmentGroup, addAssigmentResult } from '../repository/AssignmentRepository';
 
+/**
+ * Changes made on file (AssignmentController.ts)
+ * -> replaced .then callbacks with async await
+ */
 
-export const markAssignmentImplementation = (req: Request, res: Response)  => {
+export const markAssignmentImplementation = async (req: Request, res: Response)  => {
     const assignmentResult = <AssignmentResult> req.body;
-    markAssignment(assignmentResult).then(() => {
+
+    try {
+        await markAssignment(assignmentResult);
         res.status(200).send(assignmentResult);
-    }).catch(error => {
+    } catch(error){
         res.status(403).send(error);
-    })
+    }
 }
 
 async function markAssignment(assignmentResult: AssignmentResult) {
