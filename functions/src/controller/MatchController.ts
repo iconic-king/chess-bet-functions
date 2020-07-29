@@ -143,13 +143,13 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
                     {
                         owner : match.players.BLACK.owner,
                         elo_rating : decidePlayerRating(account_one,account_two,match.players.BLACK.owner),
-                        events : match.players.BLACK.events,
+                        events : match.players.BLACK.events.length === 0 ? [] : match.players.BLACK.events,
                         type : 'BLACK'
                     },
                     {
                         owner : match.players.WHITE.owner,
                         elo_rating : decidePlayerRating(account_one,account_two,match.players.WHITE.owner),
-                        events : match.players.WHITE.events,
+                        events : match.players.WHITE.events.length === 0 ? [] : match.players.WHITE.events,
                         type : 'WHITE'
                     }
                 ],
