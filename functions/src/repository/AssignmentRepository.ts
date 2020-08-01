@@ -15,3 +15,7 @@ export const addAssigmentResult = (assignmentResult: AssignmentResult) => {
 export const getAssignmentGroup =  (assignmentResult: AssignmentResult) => {
     return firestoreDatabase.collection('club_assignment_groups').doc(assignmentResult.groupId).get();
 }
+
+export const updateAssignmentResult = (assignmentResult: AssignmentResult) => {
+    return firestoreDatabase.doc(`club_assignment_result/${assignmentResult.id}`).update(assignmentResult);
+}
