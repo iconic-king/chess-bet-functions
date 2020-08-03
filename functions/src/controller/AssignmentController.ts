@@ -18,7 +18,7 @@ export const markAssignmentImplementation = async (req: Request, res: Response) 
     }
 }
 
-export const markedAssignmentImplementation = async (req: Request, res: Response) => {
+export const updateAssignmentResultImplementation = async (req: Request, res: Response) => {
     const assignmentResult = <AssignmentResult> req.body;
 
     try {
@@ -46,7 +46,9 @@ async function markAssignment(assignmentResult: AssignmentResult) {
                     points = points +  parseInt(question.points.toString());
                 }
             } 
-        } else assignmentResult.hasUnmarked = true;
+        } else {
+            assignmentResult.hasUnmarked = true;
+        }
     });
     assignmentResult.points = points;
     await addAssigmentResult(assignmentResult);

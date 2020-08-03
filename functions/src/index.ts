@@ -30,7 +30,7 @@ admin.initializeApp(functions.config().firebase);
  app.use(cors({origin: true})) // Automatically allow cross-origin requests
 
 import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEvaluateMatch} from './controller/MatchController'
-import { markAssignmentImplementation, markedAssignmentImplementation } from './controller/AssignmentController'
+import { markAssignmentImplementation, updateAssignmentResultImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
 import { onRandomChallengeRecieved, onTargetedChallengeReceived, onTargetedChallengeAccepted } from './controller/ChallengeController'
@@ -154,7 +154,7 @@ app.post('/forceEvaluateMatch', verifyToken, async (req,res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set( "Access-Control-Allow-Headers", "Content-Type");
-    await markedAssignmentImplementation(req, res);
+    await updateAssignmentResultImplementation(req, res);
  });
 
 /**
