@@ -33,8 +33,13 @@ async function markAssignment(assignmentResult: AssignmentResult) {
     //TODO: remove assignment group fetching, assignment should reach endpoint with its group
     let points: number = 0;
     const result = await getAssignmentGroup(assignmentResult);
+
     const assignmentGroup = <AssignmentGroup> result.data();
     assignmentResult.group = assignmentGroup;
+
+    let unmarkedQuestions: number = 0;
+
+    //mark all automarked questions
     assignmentResult.questions.forEach(question => {
         if(question.isAutoMarked){
             if (question.hasPuzzle && !question.puzzle.isReadOnly) {
@@ -47,9 +52,16 @@ async function markAssignment(assignmentResult: AssignmentResult) {
                 }
             } 
         } else {
-            assignmentResult.hasUnmarked = true;
+            unmarkedQuestions++;
         }
     });
+
+    if(unmarkedQuestions === 0) {
+        assignmentResult.hasUnmarked = false;
+    } else {
+        assignmentResult.hasUnmarked = true;
+    }
+
     assignmentResult.points = points;
     await addAssigmentResult(assignmentResult);
 }  
