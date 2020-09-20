@@ -42,7 +42,7 @@ function newRating (expected_score: number, score: number, rating: number){
 }
 
 function updateAccountEloRating( account:AccountService,opponent_rating:number, matchResult:MatchResult) : number {
-    if (matchResult.matchStatus === MatchStatus.DRAW) {
+    if (matchResult.matchStatus === MatchStatus.DRAW || matchResult.matchStatus === MatchStatus.GAME_ABORTED) {
         // Draw
         account.elo_rating = newRating(expectedScore(account.elo_rating, opponent_rating), 0.5 , account.elo_rating);
     } else  if(account.owner === matchResult.gain) {
@@ -128,6 +128,7 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
                             partyA: gainAccount.phoneNumber
                         }
                     }
+                    console.log(betSettleMentDTO);
                     await PaymentsApi.settleBet(betSettleMentDTO);
                 } else {
                     console.error('Service Accounts Not Found');
@@ -143,13 +144,13 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
                     {
                         owner : match.players.BLACK.owner,
                         elo_rating : decidePlayerRating(account_one,account_two,match.players.BLACK.owner),
-                        events : match.players.BLACK.events,
+                        events : match.players.BLACK.events ? match.players.BLACK.events : [],
                         type : 'BLACK'
                     },
                     {
                         owner : match.players.WHITE.owner,
                         elo_rating : decidePlayerRating(account_one,account_two,match.players.WHITE.owner),
-                        events : match.players.WHITE.events,
+                        events : match.players.WHITE.events ? match.players.WHITE.events : [],
                         type : 'WHITE'
                     }
                 ],

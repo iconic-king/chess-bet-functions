@@ -1,6 +1,7 @@
 import { Amount } from "../service/AccountService";
 
-export class PayoutDTO{
+export class PayoutDTO {
     public amount!: Amount;
-    public phoneNumber!: string;
+    public accountHolder!: string;
+    public recipient!: string;    
 }

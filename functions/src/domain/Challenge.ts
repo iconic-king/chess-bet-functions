@@ -62,8 +62,8 @@ export interface TargetedChallenge {
 }
 
 export enum ChallengeResponse {
-    CREATE = 'CREATE',
-    UPDATE = 'UPDATE',
+    CREATE = 'Challenge Created. Waiting Acceptance',
+    UPDATE = 'Challenge Found. Setting Up Match',
     ERROR = 'ERROR',
     INSUFFICIENT_FUNDS = 'INSUFFICIENT FUNDS'
 }
