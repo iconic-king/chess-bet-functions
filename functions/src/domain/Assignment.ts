@@ -34,6 +34,7 @@ export interface Question {
     description: string;
     hasPuzzle: boolean;
     puzzle: PuzzleQuestion;
+    isAutoMarked: boolean;
 }
 
 export interface Choice {
@@ -79,4 +80,5 @@ export interface AssignmentResult {
     questions: Array<Question>;
     assignmentType: AssignmentType;
     points: number;
+    hasUnmarked: boolean;
 }
