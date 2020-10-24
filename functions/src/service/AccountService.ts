@@ -11,8 +11,14 @@ export interface UserService{
     date_modified: string,
     user_name: string;
     fcmToken: string;
+    type: UserType;
     profile_photo_url:string
     permissions: Array<Permission>
+}
+
+export enum UserType {
+    CHESS_BET = "CHESS_BET",
+    CHESS_MVP = "CHESS_MVP"
 }
 
 export interface AccountService{

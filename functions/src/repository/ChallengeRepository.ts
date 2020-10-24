@@ -11,7 +11,7 @@ import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, Type } f
 import { MatchType } from '../domain/MatchType';
 import { MatchableAccount, UserService, MatchableBetOnlineAccount } from '../service/AccountService';
 import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGetMatched} from './MatchRepository';
-import { getUserByUID } from './UserRepository';
+import { getUserByUID, getChessBetUsersFCMTokens } from './UserRepository';
 import { FCMMessageService, FCMMessageType } from '../service/FCMMessageService';
 import { sendMessage } from '../controller/FCMController';
 import { ServiceAccount, PaymentAccount } from '../domain/ServiceAccount';
@@ -35,7 +35,10 @@ function createChallenge(challengeDTO: ChallengeDTO) :Challenge{
      matchType: (challengeDTO.type === Type.BET_CHALLENGE || challengeDTO.type === Type.BET_FRIENDLY) ? MatchType.BET_ONLINE : MatchType.PLAY_ONLINE,
      timeStamp: Date.now(),
      amount: (!challengeDTO.amount.amount) ? 0 : challengeDTO.amount.amount,
-     currency: (!challengeDTO.amount.currency) ? 'KES' : challengeDTO.amount.currency
+     currency: (!challengeDTO.amount.currency) ? 'KES' : challengeDTO.amount.currency,
+     userName : challengeDTO.userName,
+     photoUrl: challengeDTO.photoUrl,
+     fcmToken: challengeDTO.fcmToken
  }
 }
 
@@ -143,6 +146,32 @@ export const placeBet = async (challenge: Challenge)=> {
     await PaymentsApi.placeBet(betDTO);
 }
 
+/**
+ * Currently used by chess bet users
+ * @param challenge 
+ */
+export const notifyOnNewChallenge = async (challenge: ChallengeDTO)=> {
+    if(challenge.type !== Type.BET_CHALLENGE) {
+        return;
+    }
+    const tokens = await getChessBetUsersFCMTokens();
+    console.log(tokens);
+    if (tokens.length > 0) {
+        const fcmMessage: FCMMessageService = {
+            message : `You are invited to a USD ${challenge.amount.amount} challenge by ${challenge.userName}!!`,
+            from: challenge.userName,
+            data: '',
+            messageType: FCMMessageType.NEW_CHALLENGE,
+            fromUID: challenge.owner,
+            registrationTokens: tokens
+        }
+        const response = await sendMessage(fcmMessage);
+        if(response.successCount > 0) {
+            console.log("Notification Sent");
+        }
+    }
+}
+
 // TODO Break Fuunction into smaller readable Chanks
 export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Function) => {
     if(challengeDTO.type === Type.BET_CHALLENGE) {
@@ -176,6 +205,7 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
     if(challengeRefs.length === 0) {
         try {
             await setChallenge(challengeDTO);
+            await notifyOnNewChallenge(challengeDTO);
             response(ChallengeResponse.CREATE);
         } catch(msg) {
             console.error(`Error creating challenge for ${challengeDTO.owner} : `,msg); //  Log Error On Functions
@@ -207,7 +237,6 @@ export const getOrSetChallenge = async (challengeDTO: ChallengeDTO, response: Fu
         }
     }
 };
-
 
 export const createTargetedChallenge = async (targetedChallenge: TargetedChallenge) => {
     targetedChallenge.id = firestoreDatabase.collection(targetedChallengesCollection).doc().id;

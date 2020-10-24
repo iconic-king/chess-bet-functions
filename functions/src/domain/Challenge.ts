@@ -27,6 +27,9 @@ export interface Challenge {
     type: Type;
     amount: number;
     currency: string;
+    userName: string;
+    photoUrl: string;
+    fcmToken: string;
 }
 
 export const CreateTargetChallengeFactory = (owner: string, matchType: MatchType, target: string , duration: number, type: Type) => {
@@ -73,6 +76,9 @@ export enum ChallengeResponse {
  * Challenge Transfer Object. Allows us to recieve challenge requests from clients
  */
 export class ChallengeDTO{
+    public userName!: string;
+    public photoUrl!: string;
+    public fcmToken!: string;
     constructor(public owner:string, public duration: number,
         public eloRating: number, public type: Type, public minEloRating: number, public maxEloRating: number, public amount: Amount){}
 }

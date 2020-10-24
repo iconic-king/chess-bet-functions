@@ -1,7 +1,7 @@
 import {createUser, createUserAccount, getUserByEmail, deleteUserAccount, updateUser, updateUserPermissions} from '../repository/UserRepository'
 import { auth } from 'firebase-admin';
 import { removeMatchable } from '../repository/MatchRepository';
-import { UserService } from '../service/AccountService';
+import { UserService, UserType } from '../service/AccountService';
 import { Response, Request } from 'firebase-functions';
 import { UserPermissionDTO } from '../domain/UserPermissionDTO';
 import { getServiceAccountByPhoneNumber, createServiceAccount} from '../repository/PaymentsRepository';
@@ -17,10 +17,10 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
     }
     const snapshot = await getUserByEmail(user);
     if(snapshot.size === 0){
-        await createUser(user)
-        await createUserAccount(user.uid)
-        // Handle Service Account Creation
         if(phoneNumber) {
+            // Handle Service Account Creation
+            await createUser(user, UserType.CHESS_BET);
+            await createUserAccount(user.uid);
             // Fetch Account
             const account = await getServiceAccountByPhoneNumber(phoneNumber);
             let serviceAccount = <ServiceAccount> {
@@ -51,6 +51,10 @@ export  const createUserAccountImplementation = async (user : auth.UserRecord) =
                     throw new Error("Payments Service Encountered Error")
                 }
             }
+        } else {
+            // Handle Service Account Creation
+            await createUser(user, UserType.CHESS_MVP);
+            await createUserAccount(user.uid);
         }
         console.log("User Created Succesfully");
     } else {

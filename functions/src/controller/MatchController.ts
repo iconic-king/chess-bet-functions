@@ -96,7 +96,10 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
         account_one  = <AccountService> accountOneSnapshot.docs[0].data();
         const accountTwoSnapshot =  await getUserAccount(matchResult.loss).get();
         account_two  = <AccountService> accountTwoSnapshot.docs[0].data();
-        exchangePoints(account_one, account_two, matchResult);
+
+        if(matchResult.matchStatus !== MatchStatus.GAME_ABORTED){
+            exchangePoints(account_one, account_two, matchResult);
+        }
 
         const matchSnaphot = await getMatch(matchResult.matchId);
         if(matchSnaphot.exists()) {
@@ -115,17 +118,26 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
 
                 let betSettleMentDTO : BetSettlementDTO;
                 if(gainAccount && lossAccount) {
-                    if (matchResult.matchStatus === MatchStatus.DRAW || matchResult.matchStatus === MatchStatus.GAME_ABORTED) {
+                    if (matchResult.matchStatus === MatchStatus.DRAW) {
                         betSettleMentDTO = <BetSettlementDTO> {
                             amount : matchResult.amount,
                             partyA: gainAccount.phoneNumber,
                             partyB: lossAccount.phoneNumber,
-                            draw: "DRAW"
+                            status: "DRAW"
                         }
-                    } else{
+                    } else if (matchResult.matchStatus === MatchStatus.GAME_ABORTED) {
                         betSettleMentDTO = <BetSettlementDTO> {
                             amount : matchResult.amount,
-                            partyA: gainAccount.phoneNumber
+                            partyA: gainAccount.phoneNumber,
+                            partyB: lossAccount.phoneNumber,
+                            status: "ABORT"
+                        }
+                    } 
+                    else{
+                        betSettleMentDTO = <BetSettlementDTO> {
+                            amount : matchResult.amount,
+                            partyA: gainAccount.phoneNumber,
+                            status: "WON"
                         }
                     }
                     console.log(betSettleMentDTO);

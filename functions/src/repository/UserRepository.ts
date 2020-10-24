@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { AccountService,AccountEvent, UserService, Permission } from '../service/AccountService';
+import { AccountService,AccountEvent, UserService, Permission, UserType } from '../service/AccountService';
 /**
  * @author Collins Magondu
  */
@@ -38,7 +38,7 @@ export const createUserAccount =  (uid:string) => {
 }
 
 // Initialize user and user account in firestore
-export const createUser = (user:admin.auth.UserRecord) => {
+export const createUser = (user:admin.auth.UserRecord, type: UserType) => {
  const date = new Date().toLocaleString();
 
  const user_account: UserService = {
@@ -50,7 +50,8 @@ export const createUser = (user:admin.auth.UserRecord) => {
   permissions:[],
   user_name : (!user.displayName) ? 'anonymous' : user.displayName,
   profile_photo_url : (!user.photoURL) ? '' : user.photoURL,
-  fcmToken: ''
+  fcmToken: '',
+  type: type
  }
 
  return firestoreDatabase.collection("users").doc(user.uid).set(user_account);
@@ -82,6 +83,32 @@ export const updateUserPermissions = async (uid: string, permissions: Array<Perm
 export const getUserAccount = (uid:string) => {
   return firestoreDatabase.collection('accounts').where('owner',"==",uid);
 }
+
+export const getChessBetUsers = () => {
+  console.log(UserType.CHESS_BET.toString());
+  return firestoreDatabase.collection('users').where('type','==', UserType.CHESS_BET.toString()).get();
+}
+
+
+export const getChessBetUsersFCMTokens = async ():Promise<Array<string>> => {
+  const snapshots = await getChessBetUsers();
+  if(snapshots.empty){
+    console.log("Empty");
+    return [];
+  } else {
+    const tokens: Array<string> = [];
+    snapshots.docs.forEach(doc => {
+      
+      const user = <UserService> doc.data();
+      console.log(user.fcmToken);
+      if(user.fcmToken && user.fcmToken.length > 0) {
+        tokens.push(user.fcmToken);
+      }
+    });
+    return tokens;
+  }
+}
+
 
 export const updateAccount = (account: AccountService) => {
   const query = getUserAccount(account.owner);
