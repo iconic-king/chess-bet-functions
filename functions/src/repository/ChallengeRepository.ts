@@ -236,6 +236,7 @@ export const acceptChallenge = async (acceptChallengeDTO: AcceptChallengeDTO, re
 
         const result = await acceptChallengeOnDB(acceptChallengeDTO);
         if(result !== null) {
+            await placeBet(result);
             // Send notification to initiator
             await notifyInitiatorOnChallengeAcceptance(acceptChallengeDTO, result.fcmToken);
             response(ChallengeResponse.UPDATE);
