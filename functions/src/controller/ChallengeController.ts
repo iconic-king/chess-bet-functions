@@ -1,6 +1,6 @@
 import { Response, Request } from 'firebase-functions';
-import { ChallengeDTO, ChallengeResponse, TargetedChallenge } from '../domain/Challenge';
-import { getOrSetChallenge, createTargetedChallenge, acceptTargetedChallenge } from '../repository/ChallengeRepository';
+import { ChallengeDTO, ChallengeResponse, TargetedChallenge, AcceptChallengeDTO } from '../domain/Challenge';
+import { getOrSetChallenge, createTargetedChallenge, acceptTargetedChallenge, acceptChallenge } from '../repository/ChallengeRepository';
 
 export const onRandomChallengeRecieved = async (req: Request, res: Response) => {
     const challengeDTO = <ChallengeDTO>  req.body;
@@ -22,6 +22,25 @@ export const onTargetedChallengeReceived = (req: Request, res: Response) => {
         }).catch(error => {
             res.status(403).send({err : error});
         });
+    }
+}
+
+/**
+ * Used By Chess Bet Users
+ * @param req 
+ * @param res 
+ */
+export const acceptBetChallenege = async (req: Request, res: Response) => {
+    const acceptChallengeDTO = <AcceptChallengeDTO> req.body;
+    if(acceptChallengeDTO.uid && acceptChallengeDTO.challengeId) {
+        await acceptChallenge(acceptChallengeDTO, (response: ChallengeResponse) => {
+            res.status(200).send(response);
+        }).catch(error => {
+            console.log(error);
+            res.status(403).send(ChallengeResponse.ERROR);
+        });
+    } else {
+        res.status(403).send(ChallengeResponse.ERROR);
     }
 }
 

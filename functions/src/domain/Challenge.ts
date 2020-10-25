@@ -68,6 +68,7 @@ export enum ChallengeResponse {
     CREATE = 'Challenge Created. Waiting Acceptance',
     UPDATE = 'Challenge Found. Setting Up Match',
     ERROR = 'ERROR',
+    CHALLENGE_ACCEPTED = 'Challenge Already Accepted',
     INSUFFICIENT_FUNDS = 'INSUFFICIENT FUNDS'
 }
 
@@ -81,4 +82,9 @@ export class ChallengeDTO{
     public fcmToken!: string;
     constructor(public owner:string, public duration: number,
         public eloRating: number, public type: Type, public minEloRating: number, public maxEloRating: number, public amount: Amount){}
+}
+
+export class AcceptChallengeDTO {
+    public uid!: string;
+    public challengeId!: string;
 }

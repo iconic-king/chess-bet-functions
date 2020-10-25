@@ -33,7 +33,7 @@ import { createMatchabableAccountImplementation, evaluateAndStoreMatch, forceEva
 import { markAssignmentImplementation, updateAssignmentResultImplementation } from './controller/AssignmentController'
 import { createUserAccountImplementation, onUserAccountDeleted, onUserPermmissionsUpdate } from './controller/AccountController'
 import { createClubAccountImplementation, getClubAccountInfoImplementation } from './controller/ClubController'
-import { onRandomChallengeRecieved, onTargetedChallengeReceived, onTargetedChallengeAccepted } from './controller/ChallengeController'
+import { onRandomChallengeRecieved, onTargetedChallengeReceived, onTargetedChallengeAccepted, acceptBetChallenege } from './controller/ChallengeController'
 import { addSpecs} from './controller/MatchQueue';
 import { Challenge } from './domain/Challenge';
 import { setUpMatch } from './repository/MatchRepository';
@@ -115,6 +115,10 @@ app.post('/forceEvaluateMatch', verifyToken, async (req,res) => {
 
  app.post('/challenge/sendTargetedChallenge', verifyToken, (req, res) => {
     onTargetedChallengeReceived(req, res);
+ });
+ 
+ app.post('/challange/acceptBetChallenge', verifyToken, async (req,res) => {
+    await acceptBetChallenege(req, res);
  });
 
  app.post("/challenge/acceptTargetChallenge", verifyToken, (req, res) => {

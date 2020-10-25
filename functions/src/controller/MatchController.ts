@@ -137,6 +137,7 @@ export const evaluateAndStoreMatch = async (matchResult: MatchResult) => {
                         betSettleMentDTO = <BetSettlementDTO> {
                             amount : matchResult.amount,
                             partyA: gainAccount.phoneNumber,
+                            partyB: lossAccount.phoneNumber,
                             status: "WON"
                         }
                     }

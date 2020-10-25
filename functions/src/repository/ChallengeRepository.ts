@@ -7,7 +7,7 @@
  * -> attempted 1 TODO (break function into smaller readable Chanks marked on getOrSetChallenges function)
  */
 import * as admin from 'firebase-admin';
-import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, Type } from '../domain/Challenge';
+import { ChallengeDTO, Challenge, ChallengeResponse, TargetedChallenge, Type, AcceptChallengeDTO } from '../domain/Challenge';
 import { MatchType } from '../domain/MatchType';
 import { MatchableAccount, UserService, MatchableBetOnlineAccount } from '../service/AccountService';
 import { setMatchableAccount, createDirectMatchFromTargetedChallenge, canUserGetMatched} from './MatchRepository';
@@ -147,7 +147,7 @@ export const placeBet = async (challenge: Challenge)=> {
 }
 
 /**
- * Currently used by chess bet users
+ * Currently used by chess bet users to notify potential challenge assumers.
  * @param challenge 
  */
 export const notifyOnNewChallenge = async (challenge: ChallengeDTO)=> {
@@ -169,6 +169,83 @@ export const notifyOnNewChallenge = async (challenge: ChallengeDTO)=> {
         if(response.successCount > 0) {
             console.log("Notification Sent");
         }
+    }
+}
+
+/**
+ * Currently used by Chess Bet users
+ * @param acceptChallengeDTO 
+ */
+export const notifyInitiatorOnChallengeAcceptance = async (acceptChallengeDTO: AcceptChallengeDTO, initatorFCMToken: string) => {
+    const fcmMessage: FCMMessageService = {
+        message : `A user accepted your bet challange`,
+        from: `Challenge Acceptance`,
+        data: '',
+        messageType: FCMMessageType.ACCEPT_CHALLENGE,
+        fromUID: acceptChallengeDTO.uid,
+        registrationTokens: [initatorFCMToken]
+    }
+    const response = await sendMessage(fcmMessage);
+    if(response.successCount > 0) {
+        console.log("Notification Sent");
+    }
+};
+
+/**
+ * Currently used by Chess Bet Users
+ * @param acceptChallengeDTO
+ */
+export const acceptChallengeOnDB = async (acceptChallengeDTO: AcceptChallengeDTO) => {
+    return firestoreDatabase.runTransaction( async transaction => {
+        const ref = firestoreDatabase.collection('challenges').doc(acceptChallengeDTO.challengeId);
+        const docSnapshot = await transaction.get(ref);
+        const challenge = <Challenge> docSnapshot.data();
+        if(challenge && !challenge.accepted) {
+            transaction.update(ref, 'accepted', true);
+            transaction.update(ref, 'requester', acceptChallengeDTO.uid);
+            challenge.requester =  acceptChallengeDTO.uid;
+            return challenge;
+        } else {
+            return null;
+        }
+    });
+}
+/**
+ * Used by Chess Bet Users
+ * @param acceptChallengeDTO 
+ * @param response 
+ */
+export const acceptChallenge = async (acceptChallengeDTO: AcceptChallengeDTO, response: Function) => {
+    try {
+        const docSnapshot = await firestoreDatabase.collection('challenges').doc(acceptChallengeDTO.challengeId).get();
+        const challenge = <Challenge> docSnapshot.data();
+    
+        const serviceOwnerAccount = <ServiceAccount> await getServiceAccountByUserId(acceptChallengeDTO.uid);
+        const paymentAccount = <PaymentAccount> JSON.parse(await PaymentsApi.getAccount(serviceOwnerAccount) as string); 
+        
+        if(Number(paymentAccount.balance) < Number(challenge.amount)) {
+            response(ChallengeResponse.INSUFFICIENT_FUNDS);
+            return;
+        }
+        
+        await createMatchableAccount(new ChallengeDTO(acceptChallengeDTO.uid, challenge.duration,
+            challenge.eloRating, challenge.type, challenge.minEloRating, challenge.maxEloRating, {
+                currency: challenge.currency,
+                amount: challenge.amount
+            }));
+
+        const result = await acceptChallengeOnDB(acceptChallengeDTO);
+        if(result !== null) {
+            // Send notification to initiator
+            await notifyInitiatorOnChallengeAcceptance(acceptChallengeDTO, result.fcmToken);
+            response(ChallengeResponse.UPDATE);
+        } else {
+            // Result is null if challenge was accepted during the transaction
+            response(ChallengeResponse.CHALLENGE_ACCEPTED);
+        }
+    } catch(error) {
+        console.log(error);
+        response(ChallengeResponse.ERROR);
     }
 }
 
